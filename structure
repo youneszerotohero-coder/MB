@@ -1,0 +1,166 @@
+ecommerce-platform/
+├── backend/                      # Express.js Backend API
+│   ├── prisma/
+│   │   ├── schema.prisma        # Database schema
+│   │   ├── migrations/          # Database migrations
+│   │   └── seed.js              # Seed data
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── database.js      # Database connection
+│   │   │   └── constants.js     # App constants
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.js
+│   │   │   ├── product.controller.js
+│   │   │   ├── category.controller.js
+│   │   │   ├── order.controller.js
+│   │   │   ├── campaign.controller.js
+│   │   │   ├── analytics.controller.js
+│   │   │   └── upload.controller.js
+│   │   ├── services/
+│   │   │   ├── auth.service.js
+│   │   │   ├── product.service.js
+│   │   │   ├── order.service.js
+│   │   │   └── analytics.service.js
+│   │   ├── models/              # Prisma model extensions
+│   │   │   └── index.js
+│   │   ├── middlewares/
+│   │   │   ├── auth.middleware.js
+│   │   │   ├── validate.middleware.js
+│   │   │   ├── error.middleware.js
+│   │   │   ├── rateLimiter.middleware.js
+│   │   │   └── cors.middleware.js
+│   │   ├── routes/
+│   │   │   ├── index.js
+│   │   │   ├── auth.routes.js
+│   │   │   ├── product.routes.js
+│   │   │   ├── category.routes.js
+│   │   │   ├── order.routes.js
+│   │   │   ├── campaign.routes.js
+│   │   │   ├── analytics.routes.js
+│   │   │   └── upload.routes.js
+│   │   ├── utils/
+│   │   │   ├── logger.js
+│   │   │   ├── validators.js
+│   │   │   ├── helpers.js
+│   │   │   ├── pagination.js
+│   │   │   └── response.js
+│   │   └── app.js              # Express app setup
+│   ├── .env.example
+│   ├── .env
+│   ├── server.js               # Server entry point
+│   ├── package.json
+│   └── README.md
+│
+├── frontend/                    # React + Vite Frontend
+│   ├── public/
+│   │   └── images/
+│   ├── src/
+│   │   ├── assets/
+│   │   │   ├── images/
+│   │   │   └── styles/
+│   │   │       └── index.css   # TailwindCSS imports
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   │   ├── Layout.jsx
+│   │   │   │   ├── Header.jsx
+│   │   │   │   ├── Footer.jsx
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   ├── LoadingSpinner.jsx
+│   │   │   │   ├── ErrorBoundary.jsx
+│   │   │   │   ├── SEO.jsx
+│   │   │   │   └── PrivateRoute.jsx
+│   │   │   ├── ui/
+│   │   │   │   ├── Button.jsx
+│   │   │   │   ├── Input.jsx
+│   │   │   │   ├── Select.jsx
+│   │   │   │   ├── Modal.jsx
+│   │   │   │   ├── Card.jsx
+│   │   │   │   ├── Table.jsx
+│   │   │   │   ├── Pagination.jsx
+│   │   │   │   ├── Toast.jsx
+│   │   │   │   └── Dropdown.jsx
+│   │   │   ├── shop/
+│   │   │   │   ├── ProductCard.jsx
+│   │   │   │   ├── ProductGrid.jsx
+│   │   │   │   ├── ProductFilters.jsx
+│   │   │   │   ├── SearchBar.jsx
+│   │   │   │   ├── PriceSlider.jsx
+│   │   │   │   ├── ColorPicker.jsx
+│   │   │   │   ├── SizePicker.jsx
+│   │   │   │   ├── CartDrawer.jsx
+│   │   │   │   ├── CartItem.jsx
+│   │   │   │   └── CheckoutForm.jsx
+│   │   │   └── admin/
+│   │   │       ├── Dashboard/
+│   │   │       │   ├── StatsCard.jsx
+│   │   │       │   ├── SalesChart.jsx
+│   │   │       │   ├── ProfitChart.jsx
+│   │   │       │   └── TopProducts.jsx
+│   │   │       ├── Products/
+│   │   │       │   ├── ProductForm.jsx
+│   │   │       │   ├── ProductTable.jsx
+│   │   │       │   └── ImageUploader.jsx
+│   │   │       ├── Orders/
+│   │   │       │   ├── OrderTable.jsx
+│   │   │       │   ├── OrderDetails.jsx
+│   │   │       │   └── StatusBadge.jsx
+│   │   │       └── Campaigns/
+│   │   │           └── CampaignForm.jsx
+│   │   ├── pages/
+│   │   │   ├── shop/
+│   │   │   │   ├── Home.jsx
+│   │   │   │   ├── Products.jsx
+│   │   │   │   ├── ProductDetail.jsx
+│   │   │   │   ├── Cart.jsx
+│   │   │   │   ├── Checkout.jsx
+│   │   │   │   └── ThankYou.jsx
+│   │   │   ├── admin/
+│   │   │   │   ├── Login.jsx
+│   │   │   │   ├── Dashboard.jsx
+│   │   │   │   ├── ProductList.jsx
+│   │   │   │   ├── ProductEdit.jsx
+│   │   │   │   ├── Categories.jsx
+│   │   │   │   ├── Orders.jsx
+│   │   │   │   ├── OrderDetail.jsx
+│   │   │   │   ├── Campaigns.jsx
+│   │   │   │   └── POS.jsx
+│   │   │   └── NotFound.jsx
+│   │   ├── hooks/
+│   │   │   ├── useAuth.js
+│   │   │   ├── useCart.js
+│   │   │   ├── useProducts.js
+│   │   │   ├── useOrders.js
+│   │   │   ├── useDebounce.js
+│   │   │   ├── usePagination.js
+│   │   │   └── useInfiniteScroll.js
+│   │   ├── services/
+│   │   │   ├── api.js          # Axios instance
+│   │   │   ├── auth.service.js
+│   │   │   ├── product.service.js
+│   │   │   ├── order.service.js
+│   │   │   ├── category.service.js
+│   │   │   └── analytics.service.js
+│   │   ├── store/
+│   │   │   ├── index.js        # Redux/Zustand store
+│   │   │   ├── authSlice.js
+│   │   │   ├── cartSlice.js
+│   │   │   └── productSlice.js
+│   │   ├── utils/
+│   │   │   ├── constants.js
+│   │   │   ├── helpers.js
+│   │   │   ├── validators.js
+│   │   │   └── formatters.js
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── Router.jsx
+│   ├── .env.example
+│   ├── .env
+│   ├── index.html
+│   ├── vite.config.js
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── package.json
+│   └── README.md
+├── .gitignore
+├── .env.example
+└── README.md
