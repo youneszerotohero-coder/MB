@@ -3,7 +3,7 @@ const { ORDER_STATUS, PAYMENT_STATUS, ORDER_SOURCE } = require('../config/consta
 
 /**
  * Create a new order (checkout)
- * Expects: { customerName, customerPhone, customerWilaya, customerBaladiya, customerAddress, customerEmail, items: [{ productId, variantId, quantity }], deliveryZoneId, paymentMethod, orderSource, createdById, notes }
+ * Expects: { customerName, customerPhone, customerWilaya, customerBaladiya, customerAddress, customerEmail, items: [{ productId, variantId, quantity }], deliveryFee, orderSource, createdById, notes }
  */
 async function createOrder(payload) {
 	const {
@@ -14,8 +14,7 @@ async function createOrder(payload) {
 		customerAddress,
 		customerEmail,
 		items,
-		deliveryZoneId,
-		paymentMethod = null,
+		deliveryFee = 0, // Now passed directly from client
 		orderSource = ORDER_SOURCE.WEBSITE,
 		createdById = null,
 		notes = null,
@@ -30,14 +29,6 @@ async function createOrder(payload) {
 		let totalCost = 0;
 		const lineItems = [];
 
-		// Load delivery zone
-		let deliveryFee = 0;
-		if (deliveryZoneId) {
-			const dz = await tx.deliveryZone.findUnique({ where: { id: deliveryZoneId } });
-			if (!dz) throw new Error('Delivery zone not found');
-			deliveryFee = Number(dz.deliveryFee || 0);
-		}
-
 		// Validate items and compute totals
 		for (const it of items) {
 			const quantity = parseInt(it.quantity, 10) || 0;
@@ -51,7 +42,11 @@ async function createOrder(payload) {
 			if (it.variantId) {
 				variant = await tx.productVariant.findUnique({
 					where: { id: it.variantId },
-					include: { product: true }
+					include: { 
+						product: true,
+						color: true,
+						size: true
+					}
 				});
 				if (!variant) throw new Error('Product variant not found');
 				product = variant.product;
@@ -91,8 +86,8 @@ async function createOrder(payload) {
 		}
 
 		const discountAmount = 0;
-		const total = Number((subtotal + deliveryFee - discountAmount).toFixed(2));
-		const totalProfit = Number((total - totalCost).toFixed(2));
+		const total = Number((subtotal + Number(deliveryFee) - discountAmount).toFixed(2));
+		const totalProfit = Number((total - totalCost - Number(deliveryFee)).toFixed(2)); // Subtract delivery fee from profit
 
 		// Generate a simple order number
 		const orderNumber = `ORD-${Date.now().toString().slice(-8)}`;
@@ -108,17 +103,15 @@ async function createOrder(payload) {
 				customerAddress,
 				customerEmail,
 				subtotal,
-				deliveryFee,
+				deliveryFee: Number(deliveryFee),
 				discountAmount,
 				total,
 				totalCost,
 				totalProfit,
 				status: ORDER_STATUS.PENDING,
 				paymentStatus: PAYMENT_STATUS.PENDING,
-				paymentMethod,
 				orderSource,
 				createdById,
-				deliveryZoneId,
 				notes,
 			},
 		});
@@ -152,23 +145,32 @@ async function createOrder(payload) {
 						revenue: { increment: li.lineTotal }
 					}
 				});
-			} else {
-				await tx.product.update({
-					where: { id: li.productId },
-					data: {
-						stockQuantity: { decrement: li.quantity },
-						soldCount: { increment: li.quantity },
-						totalRevenue: { increment: li.lineTotal },
-						totalCost: { increment: li.lineCost },
-						totalProfit: { increment: li.lineProfit }
-					}
-				});
 			}
+
+			// Always update the main product metrics
+			await tx.product.update({
+				where: { id: li.productId },
+				data: {
+					stockQuantity: li.variantId ? undefined : { decrement: li.quantity },
+					soldCount: { increment: li.quantity },
+					totalRevenue: { increment: li.lineTotal },
+					totalCost: { increment: li.lineCost },
+					totalProfit: { increment: li.lineProfit }
+				}
+			});
 		}
 
 		return await tx.order.findUnique({
 			where: { id: order.id },
-			include: { orderItems: true, deliveryZone: true, createdBy: true }
+			include: { 
+				orderItems: {
+					include: {
+						product: true,
+						variant: true
+					}
+				}, 
+				createdBy: true 
+			}
 		});
 	});
 }
@@ -185,7 +187,8 @@ async function getOrders({ page = 1, limit = 20, status, paymentStatus, fromDate
 		where.OR = [
 			{ orderNumber: { contains: search } },
 			{ customerName: { contains: search, mode: 'insensitive' } },
-			{ customerPhone: { contains: search } }
+			{ customerPhone: { contains: search } },
+			{ customerEmail: { contains: search, mode: 'insensitive' } }
 		];
 	}
 
@@ -195,7 +198,14 @@ async function getOrders({ page = 1, limit = 20, status, paymentStatus, fromDate
 			skip,
 			take: parseInt(limit),
 			orderBy: { createdAt: 'desc' },
-			include: { orderItems: true, deliveryZone: true }
+			include: { 
+				orderItems: {
+					include: {
+						product: true,
+						variant: true
+					}
+				}
+			}
 		}),
 		prisma.order.count({ where })
 	]);
@@ -214,7 +224,15 @@ async function getOrders({ page = 1, limit = 20, status, paymentStatus, fromDate
 async function getOrderById(id) {
 	const order = await prisma.order.findUnique({
 		where: { id },
-		include: { orderItems: true, deliveryZone: true, createdBy: true }
+		include: { 
+			orderItems: {
+				include: {
+					product: true,
+					variant: true
+				}
+			}, 
+			createdBy: true 
+		}
 	});
 	return order;
 }
@@ -227,7 +245,18 @@ async function updateOrderStatus(orderId, status) {
 	if (status === ORDER_STATUS.DELIVERED) data.deliveredAt = new Date();
 	if (status === ORDER_STATUS.CANCELLED) data.cancelledAt = new Date();
 
-	const updated = await prisma.order.update({ where: { id: orderId }, data });
+	const updated = await prisma.order.update({ 
+		where: { id: orderId }, 
+		data,
+		include: {
+			orderItems: {
+				include: {
+					product: true,
+					variant: true
+				}
+			}
+		}
+	});
 	return updated;
 }
 

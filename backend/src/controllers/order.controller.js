@@ -32,6 +32,13 @@ async function createOrder(req, res) {
 		// Attach createdById if authenticated
 		if (req.user) req.body.createdById = req.user.id;
 
+		// Calculate delivery fee based on wilaya/baladiya if not provided
+		// You can implement your own logic here to calculate delivery fee
+		// For example:
+		if (!req.body.deliveryFee && req.body.customerWilaya) {
+			req.body.deliveryFee = calculateDeliveryFee(req.body.customerWilaya, req.body.customerBaladiya);
+		}
+
 		const order = await orderService.createOrder(req.body);
 		return successResponse(res, 'Order created successfully', order, 201);
 	} catch (error) {
@@ -64,6 +71,37 @@ async function updateStatus(req, res) {
 		console.error('Error updating order status:', error);
 		return errorResponse(res, error.message || 'Failed to update order status', 400);
 	}
+}
+
+/**
+ * Helper function to calculate delivery fee based on wilaya and baladiya
+ * You can customize this logic based on your business requirements
+ */
+function calculateDeliveryFee(wilaya, baladiya) {
+	// Example delivery fee logic
+	const deliveryFees = {
+		'Alger': 500,
+		'Oran': 600,
+		'Constantine': 650,
+		'Blida': 400,
+		// Add more wilayas as needed
+	};
+
+	// You can also have special rates for specific baladiya
+	const specialRates = {
+		'Alger_Centre': 300,
+		'Blida_Centre': 350,
+		// Add more special rates as needed
+	};
+
+	// Check for special rate first
+	const specialKey = `${wilaya}_${baladiya}`;
+	if (baladiya && specialRates[specialKey]) {
+		return specialRates[specialKey];
+	}
+
+	// Return wilaya rate or default
+	return deliveryFees[wilaya] || 700; // Default fee if wilaya not found
 }
 
 module.exports = {

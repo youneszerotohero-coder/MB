@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import {Star} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "../../../public/images/heroImage.jpg";
+import ProductCard from "../../components/productCard";
 import { useScrollAnimation } from "../../hooks/useScrollAnimation";
 
 const CATEGORIES = [
@@ -156,8 +156,8 @@ export default function MouadBoutiqueLanding() {
         </div>
       </section>
       {/* bestsellers */}
-      <section id="bestsellers" className="bg-neutral-50 py-16">
-        <div className="mx-auto max-w-7xl px-4">
+      <section id="bestsellers" className="bg-neutral-50 py-16 ">
+        <div className="mx-auto max-w-7xl px-6 lg:px-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -177,32 +177,7 @@ export default function MouadBoutiqueLanding() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
               >
-                <Card className="overflow-hidden rounded-3xl shadow-md group">
-                  {/* Product Image */}
-                  <div className="relative">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <span className="absolute top-4 left-4 bg-white/90 text-xs font-medium text-neutral-700 px-3 py-1 rounded-full shadow">
-                      Bestseller
-                    </span>
-                  </div>
-
-                  {/* Content */}
-                  <CardContent className="p-5 space-y-3 text-center">
-                    <h3 className="text-lg font-serif font-semibold text-neutral-900">
-                      {p.name}
-                    </h3>
-                    <p className="text-base font-medium text-[#C8B28D]">
-                      ${p.price.toFixed(2)}
-                    </p>
-                    <Button className="mt-2 w-full rounded-2xl bg-[#C8B28D] text-white hover:bg-[#B89E72] transition">
-                      see more
-                    </Button>
-                  </CardContent>
-                </Card>
+                <ProductCard image={p.image} name={p.name} price={p.price} />
               </motion.div>
             ))}
           </div>

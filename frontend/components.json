@@ -2,10 +2,10 @@
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "new-york",
   "rsc": false,
-  "tsx": true,
+  "tsx": false,
   "tailwind": {
     "config": "tailwind.config.js",
-    "css": "src/assets/styles/index.css",
+    "css": "src/styles/index.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""

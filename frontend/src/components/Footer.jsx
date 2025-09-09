@@ -8,7 +8,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <h3 className="text-2xl font-serif font-bold text-[#C8B28D] mb-4">
-              MB Mouad Boutique
+              Mouad Boutique
             </h3>
             <p className="text-neutral-700 mb-6 leading-relaxed">
               Crafting timeless elegance through premium handbags that complement your lifestyle and express your unique style.

@@ -1,15 +1,22 @@
-import React from 'react'
-import { BrowserRouter } from 'react-router-dom'
-import Router from './Router'
-import Navbar from './components/Navbar.jsx'
-import Footer from './components/Footer.jsx'
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import Router from "./Router";
 
-export default function App(){
-  return (
-    <BrowserRouter>
-      <Navbar />
-      <Router />
-      <Footer />
-    </BrowserRouter>
-  )
-}
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Router />
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;

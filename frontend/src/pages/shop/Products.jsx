@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
+import ProductCard from "../../components/productCard"
 
 const products = [
   {
@@ -194,19 +195,11 @@ export default function ProductCatalog() {
           <div className="flex-1 min-w-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
               {products.map((product) => (
-                <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-square bg-gray-100">
-                    <img
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform"
-                    />
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                    <p className="text-xl font-bold text-amber-700">${product.price}</p>
-                  </CardContent>
-                </Card>
+                <ProductCard
+                  name={product.name}
+                  image={product.image}
+                  price={product.price}
+                />
               ))}
             </div>
 
