@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { prisma } = require('../config/database');
-const ApiResponse = require('../utils/response');
+const { ApiResponse } = require('../utils/response');
 const logger = require('../utils/logger');
 const { USER_ROLES } = require('../config/constants');
 

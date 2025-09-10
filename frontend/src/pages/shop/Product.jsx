@@ -1,26 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import api from '@/services/api'
 import { Loader2, CheckCircle, AlertCircle, Check } from "lucide-react";
 import statesData from "../../utils/statesData"
 import ProductCard from '../../components/productCard';
 
 // Main App Component
 export default function App() {
-  const mainProduct = {
-    name: "Elegant Beige Handbag",
-    price: 199.00,
-    reviews: 12,
-    images: {
-      main: "https://i.pinimg.com/1200x/3e/82/8f/3e828f5d730c60e48ba7ac580ebcbf74.jpg",
-      thumbnails: [
-        "https://i.pinimg.com/736x/fb/8e/bb/fb8ebb6ccd2b9dbed481ff497758ebe8.jpg",
-        "https://i.pinimg.com/1200x/3e/82/8f/3e828f5d730c60e48ba7ac580ebcbf74.jpg",
-        "https://i.pinimg.com/1200x/72/ac/f8/72acf804eafc84f86d73c409a0bf7478.jpg",
-        "https://i.pinimg.com/736x/63/2f/da/632fdade106f8b33cce0e935981e60c6.jpg",
-      ],
+  const { id } = useParams()
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      const res = await api.get(`/products/${id}`)
+      return res.data.data || res.data
     },
-    colors: ['Beige', 'Black', 'White', 'Brown'],
-    sizes: ['Small', 'Medium', 'Large'],
-  };
+    enabled: !!id
+  })
+
+  const mainProduct = data || {
+    name: '',
+    price: 0,
+    reviews: 0,
+    images: { main: '', thumbnails: [] },
+    colors: [],
+    sizes: []
+  }
 
   const relatedProducts = [
     {
@@ -77,6 +83,9 @@ export default function App() {
       setAvailableCommunes([]);
     }
   }, [state]);
+
+  if (isLoading) return <div className="p-8 text-center">Loading product...</div>
+  if (isError) return <div className="p-8 text-center text-red-600">Error loading product: {error?.message}</div>
 
   useEffect(() => {
     let timeoutId;

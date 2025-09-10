@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
-import { AddCategoryDialog } from "../../components/AddCategoryDialog";
-import { AddProductDialog } from "../../components/AddProductDialog";
+import { AddProductDialog } from "../components/AddProductDialog";
+import { AddCategoryDialog } from "../components/AddCategoryDialog";
 
 export default function AProducts() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,13 +27,13 @@ export default function AProducts() {
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const res = await api.get('/categories/tree');
+      const res = await api.get('/categories');
       return res.data.data || res.data;
     }
   });
 
   // Transform data for rendering
-  const products = Array.isArray(productsData?.products) ? productsData.products : [];
+  const products = Array.isArray(productsData) ? productsData : [];
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
 
   return (

@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const analyticsController = require('../controllers/analytics.controller');
-const { authenticate, requireDashboardAccess } = require('../middlewares/auth.middleware');
+const { authenticate, requireRole } = require('../middlewares/auth.middleware');
 
-// Public endpoints may be limited; dashboard requires auth + dashboard access
-router.get('/sales', authenticate, analyticsController.sales);
-router.get('/products/profitability', authenticate, analyticsController.productProfit);
-router.get('/dashboard', authenticate, requireDashboardAccess, analyticsController.dashboard);
+// Admin/Sub-admin only endpoints
+router.use(authenticate);
+router.use(requireRole(['admin', 'sub_admin']));
+
+router.get('/sales', analyticsController.sales);
+router.get('/products/profitability', analyticsController.productProfit);
+router.get('/dashboard', analyticsController.dashboard);
 
 module.exports = router;

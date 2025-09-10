@@ -81,7 +81,7 @@ class ProductController {
         return errorResponse(res, `Product with this ${field} already exists`, 409);
       }
 
-      return errorResponse(res, 'Failed to create product', 500);
+      return errorResponse(res, 'Failed to create product,error:' + error.message, 500);
     }
   }
 

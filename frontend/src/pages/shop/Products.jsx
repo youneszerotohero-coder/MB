@@ -1,4 +1,6 @@
 import { useState } from "react"
+import { useQuery } from '@tanstack/react-query'
+import api from '@/services/api'
 import { Search, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,50 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
 import ProductCard from "../../components/productCard"
 
-const products = [
-  {
-    id: 1,
-    name: "Classic Leather Tote",
-    description: "Timeless design for everyday elegance.",
-    price: 249.99,
-    image: "https://i.pinimg.com/1200x/cb/cc/8b/cbcc8b52f390f61234260337ac4a32aa.jpg",
-  },
-  {
-    id: 2,
-    name: "Sunshine Crossbody",
-    description: "A pop of color for your outfit.",
-    price: 129.99,
-    image: "https://i.pinimg.com/1200x/cb/cc/8b/cbcc8b52f390f61234260337ac4a32aa.jpg",
-  },
-  {
-    id: 3,
-    name: "Midnight Clutch",
-    description: "Perfect for evening occasions.",
-    price: 189.99,
-    image: "https://i.pinimg.com/1200x/cb/cc/8b/cbcc8b52f390f61234260337ac4a32aa.jpg",
-  },
-  {
-    id: 4,
-    name: "Urban Backpack",
-    description: "Sleek and functional for the city.",
-    price: 299.99,
-    image: "https://i.pinimg.com/1200x/cb/cc/8b/cbcc8b52f390f61234260337ac4a32aa.jpg",
-  },
-  {
-    id: 5,
-    name: "Rose Petal Handbag",
-    description: "A charming addition to your collection.",
-    price: 179.99,
-    image: "https://i.pinimg.com/1200x/cb/cc/8b/cbcc8b52f390f61234260337ac4a32aa.jpg",
-  },
-  {
-    id: 6,
-    name: "Boho Summer Bag",
-    description: "Your perfect companion for sunny days.",
-    price: 99.99,
-    image: "https://i.pinimg.com/1200x/cb/cc/8b/cbcc8b52f390f61234260337ac4a32aa.jpg",
-  },
-]
+// products will be fetched from backend
 
 const colors = [
   { name: "Black", value: "bg-black" },
@@ -63,6 +22,36 @@ const colors = [
 
 const sizes = ["Small", "Medium", "Large"]
 const categories = ["Tote Bags", "Crossbody Bags", "Clutches", "Backpacks"]
+
+function ProductsGrid() {
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['products', { page: 1, limit: 12 }],
+    queryFn: async () => {
+      const res = await api.get('/products', { params: { page: 1, limit: 12 } })
+      return res.data.data || { products: res.data.products || [], pagination: res.data.pagination }
+    }
+  })
+
+  if (isLoading) return <div className="p-8 text-center">Loading products...</div>
+  if (isError) return <div className="p-8 text-center text-red-600">Error loading products: {error?.message}</div>
+
+  // Handle different possible response shapes
+  const products = Array.isArray(data.products) ? data.products : data
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          id={product.id}
+          name={product.name}
+          image={(product.images && product.images[0] && product.images[0].url) || product.image || product.thumbnail || ''}
+          price={product.price || product.finalPrice || 0}
+        />
+      ))}
+    </div>
+  )
+}
 
 export default function ProductCatalog() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -193,15 +182,7 @@ export default function ProductCatalog() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
-              {products.map((product) => (
-                <ProductCard
-                  name={product.name}
-                  image={product.image}
-                  price={product.price}
-                />
-              ))}
-            </div>
+            <ProductsGrid />
 
             <div className="flex justify-center items-center gap-1 sm:gap-2 flex-wrap">
               <Button variant="outline" size="sm" disabled className="hidden sm:flex bg-transparent">
