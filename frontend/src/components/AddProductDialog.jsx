@@ -18,11 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 export function AddProductDialog({ open, onOpenChange }) {
-  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -39,28 +39,19 @@ export function AddProductDialog({ open, onOpenChange }) {
     isFeatured: false
   });
 
-  // Get the toast hook at component level
+  // Get the toast hook and query client at component level
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Fetch categories when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchCategories();
-    }
-  }, [open]);
-
-  const fetchCategories = async () => {
-    try {
+  // Fetch categories using React Query
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
       const response = await api.get('/categories');
-      setCategories(response.data.data || response.data || []);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load categories",
-        variant: "destructive",
-      });
-    }
-  };
+      return response.data.data?.categories || response.data?.categories || response.data.data || response.data || [];
+    },
+    enabled: open // Only fetch when dialog is open
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,8 +76,26 @@ export function AddProductDialog({ open, onOpenChange }) {
         title: "Success",
         description: "Product created successfully",
       });
+      
+      // Invalidate and refetch product queries
+      queryClient.invalidateQueries({ queryKey: ['admin_products'] });
+      
+      // Reset form and close dialog
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        cost: '',
+        compareAtPrice: '',
+        categoryId: '',
+        stockQuantity: '',
+        brand: '',
+        weight: '',
+        tags: '',
+        isActive: true,
+        isFeatured: false
+      });
       onOpenChange(false);
-      // You might want to refresh the products list here
     } catch (error) {
       toast({
         title: "Error",
@@ -186,14 +195,14 @@ export function AddProductDialog({ open, onOpenChange }) {
                 <div className="space-y-2">
                   <Label htmlFor="category">Category *</Label>
                   <Select
-                    value={formData.categoryId || "no-selection"}
+                    value={formData.categoryId || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, categoryId: value })
                     }
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder={categories.length === 0 ? "Loading categories..." : "Select a category"} />
                     </SelectTrigger>
                     <SelectContent>
                       {Array.isArray(categories) && categories.length > 0 ? (
@@ -203,8 +212,8 @@ export function AddProductDialog({ open, onOpenChange }) {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="no-categories" disabled>
-                          No categories found
+                        <SelectItem value="" disabled>
+                          {categories.length === 0 ? "No categories available. Please create a category first." : "Loading..."}
                         </SelectItem>
                       )}
                     </SelectContent>

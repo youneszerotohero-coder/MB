@@ -18,6 +18,8 @@ async function createOrder(payload) {
 		orderSource = ORDER_SOURCE.WEBSITE,
 		createdById = null,
 		notes = null,
+		// Explicitly ignore payment_method and other unused fields
+		...unusedFields
 	} = payload;
 
 	if (!items || !Array.isArray(items) || items.length === 0) {
@@ -81,6 +83,7 @@ async function createOrder(payload) {
 				unitPrice,
 				unitCost,
 				lineTotal,
+				lineCost,
 				lineProfit,
 			});
 		}
@@ -148,15 +151,28 @@ async function createOrder(payload) {
 			}
 
 			// Always update the main product metrics
+			const updateData = {
+				soldCount: { increment: li.quantity },
+				totalRevenue: { increment: li.lineTotal }
+			};
+
+			// Only update stock if it's not a variant (variants handle their own stock)
+			if (!li.variantId) {
+				updateData.stockQuantity = { decrement: li.quantity };
+			}
+
+			// Only update cost and profit if values are defined
+			if (li.lineCost !== undefined && li.lineCost !== null && !isNaN(li.lineCost)) {
+				updateData.totalCost = { increment: li.lineCost };
+			}
+			
+			if (li.lineProfit !== undefined && li.lineProfit !== null && !isNaN(li.lineProfit)) {
+				updateData.totalProfit = { increment: li.lineProfit };
+			}
+
 			await tx.product.update({
 				where: { id: li.productId },
-				data: {
-					stockQuantity: li.variantId ? undefined : { decrement: li.quantity },
-					soldCount: { increment: li.quantity },
-					totalRevenue: { increment: li.lineTotal },
-					totalCost: { increment: li.lineCost },
-					totalProfit: { increment: li.lineProfit }
-				}
+				data: updateData
 			});
 		}
 

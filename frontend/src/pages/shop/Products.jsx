@@ -23,33 +23,165 @@ const colors = [
 const sizes = ["Small", "Medium", "Large"]
 const categories = ["Tote Bags", "Crossbody Bags", "Clutches", "Backpacks"]
 
-function ProductsGrid() {
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['products', { page: 1, limit: 12 }],
+function ProductsGrid({ filters, currentPage, setCurrentPage }) {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['products', { ...filters, page: currentPage }],
     queryFn: async () => {
-      const res = await api.get('/products', { params: { page: 1, limit: 12 } })
-      return res.data.data || { products: res.data.products || [], pagination: res.data.pagination }
+      const params = {
+        page: currentPage,
+        limit: 12,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      }
+      
+      // Only add filters if they have values
+      if (filters.searchTerm && filters.searchTerm.trim()) {
+        params.search = filters.searchTerm.trim()
+      }
+      
+      if (filters.priceRange && filters.priceRange[0] > 0) {
+        params.minPrice = filters.priceRange[0]
+      }
+      
+      if (filters.priceRange && filters.priceRange[1] < 1000) {
+        params.maxPrice = filters.priceRange[1]
+      }
+      
+      // Remove undefined values
+      Object.keys(params).forEach(key => {
+        if (params[key] === undefined || params[key] === null || params[key] === '') {
+          delete params[key]
+        }
+      })
+      
+      console.log('API call params:', params)
+      
+      const res = await api.get('/products', { params })
+      console.log('API response:', res.data)
+      
+      // The API returns: { status: "success", message: "...", data: { products: [...], pagination: {...} } }
+      return res.data.data
     }
   })
 
-  if (isLoading) return <div className="p-8 text-center">Loading products...</div>
-  if (isError) return <div className="p-8 text-center text-red-600">Error loading products: {error?.message}</div>
+  if (isLoading) return (
+    <div className="p-8 text-center">
+      <div className="flex justify-center items-center space-x-2">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <span>Loading products...</span>
+      </div>
+    </div>
+  )
+  
+  if (isError) return (
+    <div className="p-8 text-center">
+      <div className="text-red-600">Error loading products: {error?.message}</div>
+      <button 
+        onClick={() => refetch()} 
+        className="mt-4 px-4 py-2 bg-amber-200 text-amber-800 rounded hover:bg-amber-300"
+      >
+        Try Again
+      </button>
+    </div>
+  )
 
-  // Handle different possible response shapes
-  const products = Array.isArray(data.products) ? data.products : data
+  // Handle the response structure: { products: [...], pagination: {...} }
+  const products = data?.products || []
+  const pagination = data?.pagination || {}
+  
+  console.log('Processed products:', products)
+  console.log('Pagination:', pagination)
+
+  if (products.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-gray-500">No products found matching your criteria.</p>
+        <div className="mt-4 text-sm text-gray-400">
+          <p>Debug info:</p>
+          <p>API URL: {import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}</p>
+          <p>Current filters: {JSON.stringify(filters)}</p>
+          <p>Response data: {JSON.stringify(data)}</p>
+        </div>
+        <button 
+          onClick={() => refetch()} 
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Refresh Products
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
-      {products.map((product) => (
-        <ProductCard
-          key={product.id}
-          id={product.id}
-          name={product.name}
-          image={(product.images && product.images[0] && product.images[0].url) || product.image || product.thumbnail || ''}
-          price={product.price || product.finalPrice || 0}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+        {products.map((product) => (
+          <ProductCard
+            key={product.id}
+            id={product.id}
+            name={product.name || 'Unnamed Product'}
+            image={(product.images && product.images[0] && product.images[0].url) || product.image || product.thumbnail || '/placeholder-product.jpg'}
+            price={Number(product.price || product.finalPrice || 0)}
+          />
+        ))}
+      </div>
+      
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center items-center gap-1 sm:gap-2 flex-wrap">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            className="hidden sm:flex bg-transparent"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+            const pageNum = Math.max(1, Math.min(pagination.totalPages - 4, currentPage - 2)) + i
+            if (pageNum > pagination.totalPages) return null
+            
+            return (
+              <Button
+                key={pageNum}
+                variant={currentPage === pageNum ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(pageNum)}
+                className={currentPage === pageNum ? "bg-amber-200 text-amber-800" : ""}
+              >
+                {pageNum}
+              </Button>
+            )
+          })}
+          
+          {pagination.totalPages > 5 && currentPage < pagination.totalPages - 2 && (
+            <>
+              <span className="px-2 hidden sm:inline">...</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(pagination.totalPages)}
+                className="hidden sm:inline-flex"
+              >
+                {pagination.totalPages}
+              </Button>
+            </>
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={currentPage >= pagination.totalPages}
+            onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
+            className="hidden sm:flex bg-transparent"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -67,6 +199,24 @@ export default function ProductCatalog() {
     } else {
       setSelectedCategories(selectedCategories.filter((c) => c !== category))
     }
+    setCurrentPage(1) // Reset to first page when filters change
+  }
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1) // Reset to first page when search changes
+  }
+
+  const handlePriceChange = (newPriceRange) => {
+    setPriceRange(newPriceRange)
+    setCurrentPage(1) // Reset to first page when price changes
+  }
+
+  const filters = {
+    searchTerm,
+    priceRange,
+    selectedSize,
+    selectedCategories
   }
 
   return (
@@ -107,7 +257,7 @@ export default function ProductCatalog() {
                   <Input
                     placeholder="Search bags..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={handleSearchChange}
                     className="pl-10"
                   />
                 </div>
@@ -116,7 +266,7 @@ export default function ProductCatalog() {
               <div className="mb-6">
                 <h3 className="font-medium mb-4">Price</h3>
                 <div className="px-2">
-                  <Slider value={priceRange} onValueChange={setPriceRange} max={1000} step={10} className="mb-4" />
+                  <Slider value={priceRange} onValueChange={handlePriceChange} max={1000} step={10} className="mb-4" />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>${priceRange[0]}</span>
                     <span>${priceRange[1]}</span>
@@ -182,29 +332,11 @@ export default function ProductCatalog() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <ProductsGrid />
-
-            <div className="flex justify-center items-center gap-1 sm:gap-2 flex-wrap">
-              <Button variant="outline" size="sm" disabled className="hidden sm:flex bg-transparent">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="default" size="sm" className="bg-amber-200 text-amber-800">
-                1
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(2)}>
-                2
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(3)} className="hidden sm:inline-flex">
-                3
-              </Button>
-              <span className="px-2 hidden sm:inline">...</span>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(10)} className="hidden sm:inline-flex">
-                10
-              </Button>
-              <Button variant="outline" size="sm" className="hidden sm:flex bg-transparent">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <ProductsGrid 
+              filters={filters} 
+              currentPage={currentPage} 
+              setCurrentPage={setCurrentPage} 
+            />
           </div>
         </div>
       </div>

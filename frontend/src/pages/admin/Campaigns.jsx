@@ -122,64 +122,6 @@ export default function Campaigns() {
           Create Campaign
         </Button>
       </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="stats-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Spend
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-dashboard-spend">
-              ${totalSpend.toLocaleString()}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">All time marketing spend</div>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Campaigns
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">{activeCampaigns}</div>
-            <div className="text-xs text-muted-foreground mt-1">Currently running</div>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Campaign Revenue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-dashboard-revenue">
-              ${totalRevenue.toLocaleString()}
-            </div>
-            <div className="text-xs text-success mt-1">From campaign attribution</div>
-          </CardContent>
-        </Card>
-
-        <Card className="stats-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average ROI
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {totalROI.toFixed(1)}%
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">Return on investment</div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">

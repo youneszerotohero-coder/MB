@@ -59,7 +59,4 @@ export default function Router() {
       </Routes>
     </AuthProvider>
   );
-
-      {/* Catch-all */}
-      <Route path="*" element={<NotFound />} />
 }

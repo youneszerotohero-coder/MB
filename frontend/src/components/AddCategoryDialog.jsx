@@ -17,12 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 export function AddCategoryDialog({ open, onOpenChange }) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: '',
     parentId: null,
@@ -34,8 +35,8 @@ export function AddCategoryDialog({ open, onOpenChange }) {
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const res = await api.get('/categories/tree');
-      return res.data.data || res.data;
+      const res = await api.get('/categories');
+      return res.data.data?.categories || res.data?.categories || res.data.data || res.data;
     }
   });
 
@@ -53,8 +54,19 @@ export function AddCategoryDialog({ open, onOpenChange }) {
         title: "Success",
         description: "Category created successfully",
       });
+      
+      // Invalidate and refetch category queries
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['admin_products'] });
+      
+      // Reset form and close dialog
+      setFormData({
+        name: '',
+        parentId: null,
+        isActive: true,
+        sortOrder: 0
+      });
       onOpenChange(false);
-      // You might want to refresh the categories list here
     } catch (error) {
       toast({
         title: "Error",
@@ -90,16 +102,16 @@ export function AddCategoryDialog({ open, onOpenChange }) {
             <div className="space-y-2">
               <Label htmlFor="parentCategory">Parent Category</Label>
               <Select
-                value={formData.parentId || ''}
+                value={formData.parentId || 'none'}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, parentId: value || null })
+                  setFormData({ ...formData, parentId: value === 'none' ? null : value })
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a parent category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {categories?.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}

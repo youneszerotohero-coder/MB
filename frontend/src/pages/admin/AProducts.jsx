@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
-import { Plus, Search, Edit, Trash2, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Image as ImageIcon, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +9,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { AddCategoryDialog } from "../../components/AddCategoryDialog";
 import { AddProductDialog } from "../../components/AddProductDialog";
+import { EditProductDialog } from "../../components/EditProductDialog";
+import { DeleteProductDialog } from "../../components/DeleteProductDialog";
+import { EditCategoryDialog } from "../../components/EditCategoryDialog";
+import { DeleteCategoryDialog } from "../../components/DeleteCategoryDialog";
 
 export default function AProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("products");
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [editProductOpen, setEditProductOpen] = useState(false);
+  const [deleteProductOpen, setDeleteProductOpen] = useState(false);
+  const [editCategoryOpen, setEditCategoryOpen] = useState(false);
+  const [deleteCategoryOpen, setDeleteCategoryOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['admin_products'],
@@ -27,14 +37,77 @@ export default function AProducts() {
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const res = await api.get('/categories/tree');
-      return res.data.data || res.data;
+      const res = await api.get('/categories');
+      return res.data.data?.categories || res.data?.categories || res.data.data || res.data;
     }
   });
 
   // Transform data for rendering
-  const products = Array.isArray(productsData?.products) ? productsData.products : [];
-  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const allProducts = Array.isArray(productsData?.products) ? productsData.products : [];
+  const allCategories = Array.isArray(categoriesData) ? categoriesData : [];
+
+  // Filter products based on search term
+  const products = allProducts.filter(product => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      product.name?.toLowerCase().includes(term) ||
+      product.brand?.toLowerCase().includes(term) ||
+      product.category?.name?.toLowerCase().includes(term) ||
+      product.sku?.toLowerCase().includes(term)
+    );
+  });
+
+  // Filter categories based on search term (only in categories tab)
+  const categories = activeTab === "categories" 
+    ? allCategories.filter(category => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return category.name?.toLowerCase().includes(term);
+      })
+    : allCategories;
+
+  // Handler functions
+  const handleEditProduct = (product) => {
+    setSelectedProduct(product);
+    setEditProductOpen(true);
+  };
+
+  const handleDeleteProduct = (product) => {
+    setSelectedProduct(product);
+    setDeleteProductOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditProductOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteProductOpen(false);
+    setSelectedProduct(null);
+  };
+
+  // Category handler functions
+  const handleEditCategory = (category) => {
+    setSelectedCategory(category);
+    setEditCategoryOpen(true);
+  };
+
+  const handleDeleteCategory = (category) => {
+    setSelectedCategory(category);
+    setDeleteCategoryOpen(true);
+  };
+
+  const handleCloseEditCategoryDialog = () => {
+    setEditCategoryOpen(false);
+    setSelectedCategory(null);
+  };
+
+  const handleCloseDeleteCategoryDialog = () => {
+    setDeleteCategoryOpen(false);
+    setSelectedCategory(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -71,46 +144,86 @@ export default function AProducts() {
                 placeholder="Search categories..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-            <Button 
-              variant="outline"
-              onClick={() => setAddCategoryOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Category
-            </Button>
+            <div className="flex items-center gap-4">
+              {searchTerm && (
+                <div className="text-sm text-muted-foreground">
+                  Found {categories.length} of {allCategories.length} categories
+                </div>
+              )}
+              <Button 
+                variant="outline"
+                onClick={() => setAddCategoryOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Category
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((category) => (
-              <Card key={category.id} className="hover-lift">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{category.name}</CardTitle>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+            {categories.length === 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-12">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-muted-foreground mb-2">No categories found</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Start by creating your first category</p>
+                  <Button onClick={() => setAddCategoryOpen(true)} variant="outline">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Category
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              categories.map((category) => (
+                <Card key={category.id} className="hover-lift">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{category.name}</CardTitle>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditCategory(category)}
+                          title="Edit category"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteCategory(category)}
+                          title="Delete category"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
-                      {category.productCount || 0} products
-                    </span>
-                    <Badge variant="secondary" className={category.isActive ? "bg-success-light text-success" : ""}>
-                      {category.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        {category._count?.products || category.productCount || 0} products
+                      </span>
+                      <Badge variant="secondary" className={category.isActive ? "bg-success-light text-success" : ""}>
+                        {category.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
 
@@ -120,11 +233,27 @@ export default function AProducts() {
             <div className="relative w-96">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search products..."
+                placeholder="Search products by name, brand, category, or SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
+                  title="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {searchTerm && (
+                <span>
+                  Found {products.length} of {allProducts.length} products
+                </span>
+              )}
             </div>
           </div>
 
@@ -145,7 +274,20 @@ export default function AProducts() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(isLoading ? [] : products).map((product) => (
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan="8" className="py-8 text-center text-muted-foreground">
+                          Loading products...
+                        </td>
+                      </tr>
+                    ) : products.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" className="py-8 text-center text-muted-foreground">
+                          {searchTerm ? `No products found matching "${searchTerm}"` : "No products found. Create your first product to get started."}
+                        </td>
+                      </tr>
+                    ) : (
+                      products.map((product) => (
                       <tr key={product.id} className="border-b border-border/50 hover:bg-muted/30">
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
@@ -205,16 +347,28 @@ export default function AProducts() {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditProduct(product)}
+                              title="Edit product"
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteProduct(product)}
+                              title="Delete product"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -231,6 +385,26 @@ export default function AProducts() {
       <AddCategoryDialog 
         open={addCategoryOpen} 
         onOpenChange={setAddCategoryOpen} 
+      />
+      <EditProductDialog 
+        open={editProductOpen} 
+        onOpenChange={handleCloseEditDialog}
+        product={selectedProduct}
+      />
+      <DeleteProductDialog 
+        open={deleteProductOpen} 
+        onOpenChange={handleCloseDeleteDialog}
+        product={selectedProduct}
+      />
+      <EditCategoryDialog 
+        open={editCategoryOpen} 
+        onOpenChange={handleCloseEditCategoryDialog}
+        category={selectedCategory}
+      />
+      <DeleteCategoryDialog 
+        open={deleteCategoryOpen} 
+        onOpenChange={handleCloseDeleteCategoryDialog}
+        category={selectedCategory}
       />
     </div>
   );

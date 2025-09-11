@@ -26,7 +26,7 @@ export default function ProductCard(props) {
                         {props.name}
                       </p>
                       <p className="text-base font-medium text-white">
-            ${props.price.toFixed(2)}
+            ${Number(props.price || 0).toFixed(2)}
                       </p>
                     </div>
                     <button className="h-10 rounded-[2px] bg-white text-[#C8B28D] rounded-full px-2">

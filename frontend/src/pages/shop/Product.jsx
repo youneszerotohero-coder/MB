@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/services/api'
 import { Loader2, CheckCircle, AlertCircle, Check } from "lucide-react";
@@ -9,11 +9,13 @@ import ProductCard from '../../components/productCard';
 // Main App Component
 export default function App() {
   const { id } = useParams()
+  const navigate = useNavigate()
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
       const res = await api.get(`/products/${id}`)
+      console.log('Product API response:', res.data)
       return res.data.data || res.data
     },
     enabled: !!id
@@ -23,35 +25,41 @@ export default function App() {
     name: '',
     price: 0,
     reviews: 0,
-    images: { main: '', thumbnails: [] },
+    images: [],
     colors: [],
-    sizes: []
+    sizes: [],
+    description: ''
   }
 
-  const relatedProducts = [
-    {
-      name: "Crisp White Handbag",
-      price: 99.99,
-      image: "https://i.pinimg.com/736x/63/2f/da/632fdade106f8b33cce0e935981e60c6.jpg",
-    },
-    {
-      name: "Classic Black Handbag",
-      price: 129.00,
-      image: "https://i.pinimg.com/1200x/72/ac/f8/72acf804eafc84f86d73c409a0bf7478.jpg",
-    },
-    {
-      name: "Chic Grey Handbag",
-      price: 159.99,
-      image: "https://i.pinimg.com/1200x/3e/82/8f/3e828f5d730c60e48ba7ac580ebcbf74.jpg",
-    },
-    {
-      name: "Luxurious Brown Handbag",
-      price: 249.00,
-      image: "https://i.pinimg.com/736x/fb/8e/bb/fb8ebb6ccd2b9dbed481ff497758ebe8.jpg",
-    },
-  ];
+  // Process images properly 
+  const productImages = Array.isArray(mainProduct.images) 
+    ? mainProduct.images.map(img => img.url || img) 
+    : []
+  
+  const mainImage = productImages[0] || '/placeholder-product.jpg'
+  const thumbnails = productImages.length > 1 ? productImages.slice(1) : []
 
-  const [selectedImage, setSelectedImage] = useState(mainProduct.images.main);
+  // Fetch related products
+  const { data: relatedProductsData } = useQuery({
+    queryKey: ['related-products', mainProduct.categoryId],
+    queryFn: async () => {
+      const res = await api.get('/products', { 
+        params: { 
+          limit: 4, 
+          sortBy: 'createdAt',
+          sortOrder: 'desc'
+        } 
+      })
+      return res.data.data
+    },
+    enabled: !!data
+  })
+
+  const relatedProducts = Array.isArray(relatedProductsData?.products) 
+    ? relatedProductsData.products.filter(p => p.id !== id).slice(0, 4)
+    : []
+
+  const [selectedImage, setSelectedImage] = useState(mainImage);
   const [selectedColor, setSelectedColor] = useState('Beige');
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [quantity, setQuantity] = useState(1);
@@ -66,9 +74,28 @@ export default function App() {
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
   // Calculate pricing
-  const subtotal = mainProduct.price * quantity;
+  const productPrice = Number(mainProduct.price || 0)
+  const subtotal = productPrice * quantity;
   const shipping = subtotal > 0 ? 600 : 0; // example shipping
   const total = subtotal + shipping;
+
+  // ALL useEffect hooks MUST come before any conditional returns
+  // Update selected image when product data changes
+  useEffect(() => {
+    if (data && productImages.length > 0) {
+      setSelectedImage(productImages[0])
+    }
+  }, [data, productImages])
+
+  // Set default color and size when product loads
+  useEffect(() => {
+    if (data && mainProduct.colors && mainProduct.colors.length > 0) {
+      setSelectedColor(mainProduct.colors[0])
+    }
+    if (data && mainProduct.sizes && mainProduct.sizes.length > 0) {
+      setSelectedSize(mainProduct.sizes[0])
+    }
+  }, [data, mainProduct.colors, mainProduct.sizes])
 
   useEffect(() => {
     if (state) {
@@ -84,9 +111,6 @@ export default function App() {
     }
   }, [state]);
 
-  if (isLoading) return <div className="p-8 text-center">Loading product...</div>
-  if (isError) return <div className="p-8 text-center text-red-600">Error loading product: {error?.message}</div>
-
   useEffect(() => {
     let timeoutId;
     if (notification.show) {
@@ -96,6 +120,36 @@ export default function App() {
     }
     return () => clearTimeout(timeoutId);
   }, [notification.show]);
+
+  // NOW it's safe to do conditional returns after ALL hooks are declared
+  if (isLoading) return (
+    <div className="mt-20 p-8 text-center">
+      <div className="flex justify-center items-center space-x-2">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <span>Loading product...</span>
+      </div>
+    </div>
+  )
+  
+  if (isError) return (
+    <div className="mt-20 p-8 text-center">
+      <div className="text-red-600">Error loading product: {error?.message}</div>
+      <div className="mt-4">
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-4 py-2 bg-amber-200 text-amber-800 rounded hover:bg-amber-300"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  )
+
+  if (!data) return (
+    <div className="mt-20 p-8 text-center">
+      <div className="text-gray-600">Product not found</div>
+    </div>
+  )
 
   const handleCheckout = async () => {
     if (!fullName || !phone) {
@@ -108,13 +162,33 @@ export default function App() {
     }
 
     setIsProcessing(true);
+    
+    // Simulate API call for order creation
     setTimeout(() => {
       setIsProcessing(false);
+      
+      // Generate a random order ID for demo purposes
+      const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
+      
+      // Show success notification briefly
       setNotification({
         show: true,
-        message: `Order #ABC-123 has been created successfully!`,
+        message: `Order ${orderId} created successfully! Redirecting...`,
         type: "success"
       });
+      
+      // Redirect to thank you page after a short delay
+      setTimeout(() => {
+        navigate('/thankyou', { 
+          state: { 
+            orderId,
+            productName: mainProduct.name,
+            quantity,
+            total: (total / 100 + subtotal).toFixed(2),
+            customerName: fullName
+          }
+        });
+      }, 1000);
     }, 1500);
   };
 
@@ -169,17 +243,19 @@ export default function App() {
                 className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
               />
             </div>
-            <div className="h-24 flex justify-center space-x-2 md:space-x-4">
-              {mainProduct.images.thumbnails.map((img, index) => (
-                <div
-                  key={index}
-                  className={`w-1/4 cursor-pointer overflow-hidden rounded-lg border-2 transition-colors duration-200 ${selectedImage === img ? 'border-gray-900' : 'border-gray-200'}`}
-                  onClick={() => setSelectedImage(img)}
-                >
-                  <img src={img} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
+            {productImages.length > 1 && (
+              <div className="h-24 flex justify-center space-x-2 md:space-x-4">
+                {productImages.map((img, index) => (
+                  <div
+                    key={index}
+                    className={`w-1/4 cursor-pointer overflow-hidden rounded-lg border-2 transition-colors duration-200 ${selectedImage === img ? 'border-gray-900' : 'border-gray-200'}`}
+                    onClick={() => setSelectedImage(img)}
+                  >
+                    <img src={img} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details Section */}
@@ -189,30 +265,80 @@ export default function App() {
               <div className="flex">{renderStars(4)}</div>
               <span>({mainProduct.reviews} reviews)</span>
             </div>
-            <p className="mb-6 text-2xl font-semibold">${mainProduct.price.toFixed(2)}</p>
+            <p className="mb-6 text-2xl font-semibold">${Number(mainProduct.price || 0).toFixed(2)}</p>
 
             {/* Color Selector */}
+            {mainProduct.colors && mainProduct.colors.length > 0 && (
+              <div className="mb-6">
+                <span className="block text-sm font-medium">
+                  Color: <span className="font-semibold">{selectedColor}</span>
+                </span>
+                <div className="mt-2 flex space-x-2">
+                  {mainProduct.colors.map((color) => (
+                    <button
+                      key={color}
+                      className={`h-8 w-8 rounded-full border-2 transition-colors duration-200 ${selectedColor === color ? 'border-gray-900' : 'border-gray-200'}`}
+                      style={{ backgroundColor: color === 'Beige' ? '#E5D6C5' : color === 'Black' ? '#1E1E1E' : color === 'White' ? '#F4F4F4' : '#6A4D3B' }}
+                      onClick={() => setSelectedColor(color)}
+                      aria-label={`Select color ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Size Selector */}
+            {mainProduct.sizes && mainProduct.sizes.length > 0 && (
+              <div className="mb-6">
+                <span className="block text-sm font-medium">
+                  Size: <span className="font-semibold">{selectedSize}</span>
+                </span>
+                <div className="mt-2 flex space-x-2">
+                  {mainProduct.sizes.map((size) => (
+                    <button
+                      key={size}
+                      className={`px-4 py-2 border-2 rounded transition-colors duration-200 ${selectedSize === size ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 hover:border-gray-400'}`}
+                      onClick={() => setSelectedSize(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Quantity Selector */}
             <div className="mb-6">
-              <span className="block text-sm font-medium">
-                Color: <span className="font-semibold">{selectedColor}</span>
+              <span className="block text-sm font-medium mb-2">
+                Quantity
               </span>
-              <div className="mt-2 flex space-x-2">
-                {mainProduct.colors.map((color) => (
-                  <button
-                    key={color}
-                    className={`h-8 w-8 rounded-full border-2 transition-colors duration-200 ${selectedColor === color ? 'border-gray-900' : 'border-gray-200'}`}
-                    style={{ backgroundColor: color === 'Beige' ? '#E5D6C5' : color === 'Black' ? '#1E1E1E' : color === 'White' ? '#F4F4F4' : '#6A4D3B' }}
-                    onClick={() => setSelectedColor(color)}
-                    aria-label={`Select color ${color}`}
-                  />
-                ))}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                >
+                  -
+                </button>
+                <span className="px-4 py-2 border border-gray-300 rounded min-w-[3rem] text-center">
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                >
+                  +
+                </button>
               </div>
             </div>
+            
             {/* Description */}
             <div className="">
               <h2 className='font-semibold mb-3 text-lg'>Description</h2>
-              <p className='text-gray-600 leading-relaxed'>This elegant handbag is perfect for any occasion. Made from high-quality materials, it offers both comfort and style. The bag features a flattering silhouette and subtle details that add a touch of sophistication. Available in various colors, it's designed to fit and flatter every body type.</p>
+              <p className='text-gray-600 leading-relaxed'>
+                {mainProduct.description || 'This elegant handbag is perfect for any occasion. Made from high-quality materials, it offers both comfort and style. The bag features a flattering silhouette and subtle details that add a touch of sophistication. Available in various colors, it\'s designed to fit and flatter every body type.'}
+              </p>
             </div>
+            
           </div>
         </div>
             {/* Checkout Form */}
@@ -309,7 +435,7 @@ export default function App() {
                       <p className="text-sm text-gray-500">Color: {selectedColor}</p>
                       <p className="text-sm text-gray-500">Qty: {quantity}</p>
                       <p className="text-sm font-medium mt-1 text-gray-800">
-                        ${mainProduct.price.toFixed(2)}
+                        ${Number(mainProduct.price || 0).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -352,26 +478,22 @@ export default function App() {
               </div>
             </div>
         {/* You May Also Like Section */}
-        <div className="mt-12">
-          <h2 className="mb-8 text-center text-xl font-bold md:text-2xl">You May Also Like</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:gap-6">
-            {relatedProducts.map((product, index) => (
-              <div key={index} className="overflow-hidden rounded-md bg-white">
-                <div className="aspect-square w-full">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                  />
-                </div>
-                <div className="p-2 sm:p-4">
-                  <h3 className="text-sm font-semibold sm:text-base">{product.name}</h3>
-                  <p className="text-xs text-gray-500 sm:text-sm">${product.price.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+        {relatedProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="mb-8 text-center text-xl font-bold md:text-2xl">You May Also Like</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:gap-6">
+              {relatedProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name || 'Unnamed Product'}
+                  image={(product.images && product.images[0] && product.images[0].url) || product.image || product.thumbnail || '/placeholder-product.jpg'}
+                  price={Number(product.price || product.finalPrice || 0)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

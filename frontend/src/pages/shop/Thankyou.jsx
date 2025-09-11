@@ -1,24 +1,27 @@
 import { CheckCircle, ShoppingBag, User, CreditCard, Calendar, Phone } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function ThankYou() {
-  // Sample order data - in a real app this would come from props or context
-  const orderData = {
-    orderNumber: '#ORD-2024-001',
-    customerName: 'John Smith',
-    email: 'john.smith@email.com',
-    phone: '+06 97 13 37 15',
-    product: 'Premium Wireless Headphones',
-    quantity: 2,
-    unitPrice: 149.99,
-    subtotal: 299.98,
-    tax: 24.00,
-    total: 323.98,
-    orderDate: 'September 7, 2025'
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get order data passed from the product page, or use defaults
+  const orderData = location.state || {
+    orderId: '#ORD-DEFAULT-001',
+    customerName: 'Customer',
+    productName: 'Product',
+    quantity: 1,
+    total: '0.00'
   };
 
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
   const handleReturnToShop = () => {
-    // In a real app, this would navigate back to the shop
-    console.log('Returning to shop...');
+    navigate('/products');
   };
 
   return (
@@ -63,7 +66,7 @@ export default function ThankYou() {
                   <Calendar className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-500">Order Date</p>
-                    <p className="font-medium text-gray-900">{orderData.orderDate}</p>
+                    <p className="font-medium text-gray-900">{currentDate}</p>
                   </div>
                 </div>
               </div>
@@ -72,14 +75,14 @@ export default function ThankYou() {
                   <CreditCard className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-500">Order Number</p>
-                    <p className="font-medium text-gray-900">{orderData.orderNumber}</p>
+                    <p className="font-medium text-gray-900">{orderData.orderId}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-gray-400" />
+                  <ShoppingBag className="w-5 h-5 text-gray-400" />
                   <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium text-gray-900">{orderData.phone}</p>
+                    <p className="text-sm text-gray-500">Items</p>
+                    <p className="font-medium text-gray-900">{orderData.quantity} item(s)</p>
                   </div>
                 </div>
               </div>
@@ -91,29 +94,21 @@ export default function ThankYou() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{orderData.product}</p>
+                    <p className="font-medium text-gray-900">{orderData.productName}</p>
                     <p className="text-sm text-gray-500">Qty: {orderData.quantity}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-gray-900">${orderData.unitPrice}</p>
-                    <p className="text-sm text-gray-500">each</p>
+                    <p className="font-medium text-gray-900">${orderData.total}</p>
+                    <p className="text-sm text-gray-500">total</p>
                   </div>
                 </div>
               </div>
 
               {/* Order summary */}
               <div className="mt-6 space-y-3">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span>${orderData.subtotal}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Tax</span>
-                  <span>${orderData.tax}</span>
-                </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between text-lg font-semibold text-gray-900">
-                    <span>Total</span>
+                    <span>Total Paid</span>
                     <span style={{ color: '#C8B28D' }}>${orderData.total}</span>
                   </div>
                 </div>
@@ -130,7 +125,7 @@ export default function ThankYou() {
               <h3 className="font-semibold text-gray-900 mb-2">Next Steps</h3>
               <p className="text-gray-700">
                 We will call you soon to confirm the sale and arrange delivery details. 
-                Please keep your phone available at {orderData.phone}.
+                Please keep your phone available for our call.
               </p>
             </div>
           </div>

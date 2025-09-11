@@ -125,55 +125,6 @@ export default function POS() {
 
         {/* Cart and Checkout Section */}
         <div className="space-y-6">
-          {/* Customer Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Customer Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground">Customer Name</label>
-                <Input
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Optional"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground">Phone Number</label>
-                <Input
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="Optional"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-sm font-medium text-foreground">Wilaya</label>
-                  <Select value={wilaya} onValueChange={setWilaya}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="alger">Alger</SelectItem>
-                      <SelectItem value="oran">Oran</SelectItem>
-                      <SelectItem value="constantine">Constantine</SelectItem>
-                      <SelectItem value="blida">Blida</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground">Baladiya</label>
-                  <Input
-                    value={baladiya}
-                    onChange={(e) => setBaladiya(e.target.value)}
-                    placeholder="Optional"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Shopping Cart */}
           <Card>
             <CardHeader>
