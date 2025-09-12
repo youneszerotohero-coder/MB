@@ -73,10 +73,10 @@ export default function Orders() {
       };
 
       const response = await getOrders(options);
-      setOrders(response.data.orders);
+      setOrders(response.data?.orders || []);
       setPagination(prev => ({
         ...prev,
-        ...response.data.pagination
+        ...response.data?.pagination
       }));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch orders');
@@ -244,7 +244,7 @@ export default function Orders() {
 
       {/* Orders Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 ">
           {loading && (
             <div className="flex items-center justify-center p-8">
               <RefreshCw className="w-6 h-6 animate-spin mr-2" />
@@ -262,7 +262,7 @@ export default function Orders() {
           )}
 
           {!loading && !error && (
-            <div className="overflow-x-auto">
+            <div className="">
               {filteredOrders.length === 0 ? (
                 <div className="text-center p-8">
                   <p className="text-muted-foreground">No orders found matching your filters.</p>

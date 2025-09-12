@@ -231,3 +231,24 @@ html, body, #root {
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  /* Main container */
+  .main-container {
+    @apply w-full;
+  }
+
+  @media (min-width: 1024px) { /* Laptop and up */
+    .main-container {
+      height: calc(100vh - 2rem); /* 2rem = py-8 (top+bottom padding = 2rem) */
+      overflow-y: auto;
+    }
+  }
+
+  /* Cards wrapper for mobile */
+  .cards-mobile {
+    @media (max-width: 1023px) { /* Mobile & tablets only */
+      overflow-x: auto;
+      width: calc(100vw - 4px);
+    }
+  }
+}

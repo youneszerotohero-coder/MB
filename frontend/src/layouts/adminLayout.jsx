@@ -24,7 +24,7 @@ export default function AdminLayout() {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background grid grid-cols-1 lg:grid-cols-[10em-1fr]">
+    <div className="min-h-screen w-[100vw] grid grid-cols-1 lg:grid-cols-[16em-1fr]">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -35,7 +35,7 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+        "h-[100vh] fixed z-50 w-64 bg-sidebar transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex h-full flex-col">
@@ -83,12 +83,10 @@ export default function AdminLayout() {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 col-start-2 col-end-3">
-        {/* Top navbar */}
-
+      <div className="lg:w-[calc(100vw-16em)] w-100vw col-start-2 col-end-3">
         {/* Page content */}
-        <main className="py-8">
-          <div className="px-4 sm:px-6 lg:px-8">
+        <main className="w-full py-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>

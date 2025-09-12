@@ -5,9 +5,9 @@ import { Search, ChevronLeft, ChevronRight, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
 import ProductCard from "../../components/productCard"
+import { getProductImageUrl } from '@/utils/imageUtils'
 
 // products will be fetched from backend
 
@@ -15,7 +15,7 @@ const colors = [
   { name: "Black", value: "bg-black" },
   { name: "White", value: "bg-white border border-gray-300" },
   { name: "Brown", value: "bg-amber-800" },
-  { name: "Beige", value: "bg-amber-200" },
+  { name: "Beige", value: "bg-[#C8B28D]" },
   { name: "Blue", value: "bg-blue-600" },
   { name: "Green", value: "bg-green-600" },
 ]
@@ -34,32 +34,22 @@ function ProductsGrid({ filters, currentPage, setCurrentPage }) {
         sortOrder: 'desc'
       }
       
-      // Only add filters if they have values
       if (filters.searchTerm && filters.searchTerm.trim()) {
         params.search = filters.searchTerm.trim()
       }
-      
       if (filters.priceRange && filters.priceRange[0] > 0) {
         params.minPrice = filters.priceRange[0]
       }
-      
       if (filters.priceRange && filters.priceRange[1] < 1000) {
         params.maxPrice = filters.priceRange[1]
       }
-      
-      // Remove undefined values
       Object.keys(params).forEach(key => {
         if (params[key] === undefined || params[key] === null || params[key] === '') {
           delete params[key]
         }
       })
       
-      console.log('API call params:', params)
-      
       const res = await api.get('/products', { params })
-      console.log('API response:', res.data)
-      
-      // The API returns: { status: "success", message: "...", data: { products: [...], pagination: {...} } }
       return res.data.data
     }
   })
@@ -67,7 +57,7 @@ function ProductsGrid({ filters, currentPage, setCurrentPage }) {
   if (isLoading) return (
     <div className="p-8 text-center">
       <div className="flex justify-center items-center space-x-2">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8B28D]"></div>
         <span>Loading products...</span>
       </div>
     </div>
@@ -78,19 +68,15 @@ function ProductsGrid({ filters, currentPage, setCurrentPage }) {
       <div className="text-red-600">Error loading products: {error?.message}</div>
       <button 
         onClick={() => refetch()} 
-        className="mt-4 px-4 py-2 bg-amber-200 text-amber-800 rounded hover:bg-amber-300"
+        className="mt-4 px-4 py-2 bg-[#C8B28D] text-white rounded hover:bg-[#b49e77]"
       >
         Try Again
       </button>
     </div>
   )
 
-  // Handle the response structure: { products: [...], pagination: {...} }
   const products = data?.products || []
   const pagination = data?.pagination || {}
-  
-  console.log('Processed products:', products)
-  console.log('Pagination:', pagination)
 
   if (products.length === 0) {
     return (
@@ -104,7 +90,7 @@ function ProductsGrid({ filters, currentPage, setCurrentPage }) {
         </div>
         <button 
           onClick={() => refetch()} 
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="mt-4 px-4 py-2 bg-[#C8B28D] text-white rounded hover:bg-[#b49e77]"
         >
           Refresh Products
         </button>
@@ -120,13 +106,12 @@ function ProductsGrid({ filters, currentPage, setCurrentPage }) {
             key={product.id}
             id={product.id}
             name={product.name || 'Unnamed Product'}
-            image={(product.images && product.images[0] && product.images[0].url) || product.image || product.thumbnail || '/placeholder-product.jpg'}
+            image={getProductImageUrl(product)}
             price={Number(product.price || product.finalPrice || 0)}
           />
         ))}
       </div>
       
-      {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="flex justify-center items-center gap-1 sm:gap-2 flex-wrap">
           <Button 
@@ -142,14 +127,13 @@ function ProductsGrid({ filters, currentPage, setCurrentPage }) {
           {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
             const pageNum = Math.max(1, Math.min(pagination.totalPages - 4, currentPage - 2)) + i
             if (pageNum > pagination.totalPages) return null
-            
             return (
               <Button
                 key={pageNum}
                 variant={currentPage === pageNum ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCurrentPage(pageNum)}
-                className={currentPage === pageNum ? "bg-amber-200 text-amber-800" : ""}
+                className={currentPage === pageNum ? "bg-[#C8B28D] text-white hover:bg-[#b49e77]" : ""}
               >
                 {pageNum}
               </Button>
@@ -199,17 +183,17 @@ export default function ProductCatalog() {
     } else {
       setSelectedCategories(selectedCategories.filter((c) => c !== category))
     }
-    setCurrentPage(1) // Reset to first page when filters change
+    setCurrentPage(1)
   }
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value)
-    setCurrentPage(1) // Reset to first page when search changes
+    setCurrentPage(1)
   }
 
   const handlePriceChange = (newPriceRange) => {
     setPriceRange(newPriceRange)
-    setCurrentPage(1) // Reset to first page when price changes
+    setCurrentPage(1)
   }
 
   const filters = {
@@ -225,7 +209,7 @@ export default function ProductCatalog() {
         <div className="md:hidden mb-4">
           <Button
             onClick={() => setShowMobileFilters(true)}
-            className="w-full bg-amber-200 text-amber-800 hover:bg-amber-300"
+            className="w-full bg-[#C8B28D] text-white hover:bg-[#b49e77]"
           >
             <Filter className="h-4 w-4 mr-2" />
             Filters
@@ -283,7 +267,7 @@ export default function ProductCatalog() {
                       variant={selectedSize === size ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedSize(size)}
-                      className={`${selectedSize === size ? "bg-amber-200 text-amber-800 hover:bg-amber-300" : ""} flex-1 min-w-0 sm:flex-none`}
+                      className={`${selectedSize === size ? "bg-[#C8B28D] text-white hover:bg-[#b49e77]" : ""} flex-1 min-w-0 sm:flex-none`}
                     >
                       {size}
                     </Button>
@@ -323,7 +307,7 @@ export default function ProductCatalog() {
               </div>
 
               <Button
-                className="w-full bg-amber-200 text-amber-800 hover:bg-amber-300"
+                className="w-full bg-[#C8B28D] text-white hover:bg-[#b49e77]"
                 onClick={() => setShowMobileFilters(false)}
               >
                 Apply Filters

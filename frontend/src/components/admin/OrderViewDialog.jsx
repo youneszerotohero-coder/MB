@@ -45,7 +45,7 @@ export default function OrderViewDialog({ orderId, open, onOpenChange }) {
       setLoading(true)
       setError(null)
       const response = await getOrderById(orderId)
-      setOrder(response.data)
+      setOrder(response.data || null)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch order details')
       console.error('Error fetching order details:', err)

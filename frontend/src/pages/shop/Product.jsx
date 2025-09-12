@@ -5,6 +5,7 @@ import api from '@/services/api'
 import { Loader2, CheckCircle, AlertCircle, Check } from "lucide-react";
 import statesData from "../../utils/statesData"
 import ProductCard from '../../components/productCard';
+import { getProductImageUrl, resolveImageUrl } from '@/utils/imageUtils';
 
 // Main App Component
 export default function App() {
@@ -33,7 +34,7 @@ export default function App() {
 
   // Process images properly 
   const productImages = Array.isArray(mainProduct.images) 
-    ? mainProduct.images.map(img => img.url || img) 
+    ? mainProduct.images.map(img => resolveImageUrl(img.url || img)) 
     : []
   
   const mainImage = productImages[0] || '/placeholder-product.jpg'
@@ -85,7 +86,7 @@ export default function App() {
     if (data && productImages.length > 0) {
       setSelectedImage(productImages[0])
     }
-  }, [data, productImages])
+  }, [data])
 
   // Set default color and size when product loads
   useEffect(() => {
@@ -162,34 +163,57 @@ export default function App() {
     }
 
     setIsProcessing(true);
-    
-    // Simulate API call for order creation
-    setTimeout(() => {
-      setIsProcessing(false);
-      
-      // Generate a random order ID for demo purposes
-      const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
-      
-      // Show success notification briefly
+
+    try {
+      // Prepare order data
+      const orderData = {
+        customerName: fullName,
+        customerPhone: phone,
+        customerWilaya: state,
+        customerBaladiya: commune,
+        customerAddress: `${fullName}, ${commune}, ${state}`,
+        customerEmail: `${phone}@temp.com`, // Temporary email
+        items: [{
+          productId: mainProduct.id,
+          quantity: quantity
+        }],
+        deliveryFee: shipping,
+        orderSource: 'website',
+        notes: `Order from product page - ${mainProduct.name}`
+      };
+
+      const response = await api.post('/orders', orderData);
+
+      // Show success notification
       setNotification({
         show: true,
-        message: `Order ${orderId} created successfully! Redirecting...`,
+        message: `Order ${response.data.data.orderNumber} created successfully! Redirecting...`,
         type: "success"
       });
-      
+
       // Redirect to thank you page after a short delay
       setTimeout(() => {
-        navigate('/thankyou', { 
-          state: { 
-            orderId,
+        navigate('/thankyou', {
+          state: {
+            orderId: response.data.data.orderNumber,
             productName: mainProduct.name,
             quantity,
-            total: (total / 100 + subtotal).toFixed(2),
+            total: total.toFixed(2),
             customerName: fullName
           }
         });
       }, 1000);
-    }, 1500);
+
+    } catch (error) {
+      console.error('Error creating order:', error);
+      setNotification({
+        show: true,
+        message: error.response?.data?.message || "Failed to create order. Please try again.",
+        type: "error"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const renderStars = (count) => {
@@ -487,7 +511,7 @@ export default function App() {
                   key={product.id}
                   id={product.id}
                   name={product.name || 'Unnamed Product'}
-                  image={(product.images && product.images[0] && product.images[0].url) || product.image || product.thumbnail || '/placeholder-product.jpg'}
+                  image={getProductImageUrl(product)}
                   price={Number(product.price || product.finalPrice || 0)}
                 />
               ))}

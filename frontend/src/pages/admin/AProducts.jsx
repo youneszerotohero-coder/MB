@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
 import { Plus, Search, Edit, Trash2, Image as ImageIcon, X } from "lucide-react";
+import { resolveImageUrl } from '@/utils/imageUtils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -136,8 +137,8 @@ export default function AProducts() {
         </TabsList>
 
         {/* Categories Tab */}
-        <TabsContent value="categories" className="space-y-6">
-          <div className="flex justify-between items-center">
+        <TabsContent value="categories" className="space-y-6 w-[100%]">
+          <div className="flex justify-between items-center w-[100%]">
             <div className="relative w-96">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -257,9 +258,9 @@ export default function AProducts() {
             </div>
           </div>
 
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
+          <Card className="">
+            <CardContent className="">
+              <div className="">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
@@ -294,9 +295,9 @@ export default function AProducts() {
                             <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
                               {product.images?.[0] ? (
                                 <img
-                                  src={product.images[0].url}
+                                  src={resolveImageUrl(product.images[0].url)}
                                   alt={product.name}
-                                  className="h-full w-full object-cover"
+                                  className="h-full w-full object-cover rounded-lg"
                                 />
                               ) : (
                                 <div className="h-full w-full flex items-center justify-center">

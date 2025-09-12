@@ -27,8 +27,8 @@ async function upload(req, res) {
 			fs.writeFileSync(filePath, buffer);
 		}
 
-		const publicUrl = `/uploads/${fileName}`; // consumer can serve this statically
-		return successResponse(res, { url: publicUrl }, 'File uploaded successfully', 201);
+	const publicUrl = `/uploads/${fileName}`; // consumer can serve this statically
+	return successResponse(res, 'File uploaded successfully', { url: publicUrl }, 201);
 	} catch (error) {
 		console.error('Upload error:', error);
 		return errorResponse(res, 'Failed to upload file', 500);
