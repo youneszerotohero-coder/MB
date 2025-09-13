@@ -258,7 +258,7 @@ export default function AProducts() {
             </div>
           </div>
 
-          <Card className="">
+          <Card className="cards-mobile">
             <CardContent className="">
               <div className="">
                 <table className="w-full">

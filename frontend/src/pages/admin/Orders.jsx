@@ -244,7 +244,7 @@ export default function Orders() {
 
       {/* Orders Table */}
       <Card>
-        <CardContent className="p-0 ">
+        <CardContent className="p-0 cards-mobile">
           {loading && (
             <div className="flex items-center justify-center p-8">
               <RefreshCw className="w-6 h-6 animate-spin mr-2" />

@@ -6,8 +6,8 @@ import {
   ShoppingCart, 
   Store, 
   Megaphone,
-  Menu,
-  X
+  X,
+  PanelLeftOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ export default function AdminLayout() {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen w-[100vw] grid grid-cols-1 lg:grid-cols-[16em-1fr]">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[16em-1fr]">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -32,7 +32,14 @@ export default function AdminLayout() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
-
+      <div className="lg:hidden rounded-full bg-gray-100 px-2 pt-2 pb-[1px] absolute top-2 left-2">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="text-sidebar-foreground hover:text-sidebar-primary"
+        >
+          <PanelLeftOpen className="h-6 w-6" />
+        </button>
+      </div>
       {/* Sidebar */}
       <div className={cn(
         "h-[100vh] fixed z-50 w-64 bg-sidebar transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
@@ -83,10 +90,10 @@ export default function AdminLayout() {
       </div>
 
       {/* Main content */}
-      <div className="lg:w-[calc(100vw-16em)] w-100vw col-start-2 col-end-3">
+      <div className="h-[100vh] lg:w-[calc(100vw-16em)] w-[100vw] col-start-2 col-end-3 overflow-y-auto">
         {/* Page content */}
         <main className="w-full py-8">
-          <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="pt-4 lg:pt-0 w-full px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>
