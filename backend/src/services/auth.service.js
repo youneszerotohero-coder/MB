@@ -45,4 +45,34 @@ const login = async ({ email, password }) => {
   return { user: safeUser, token };
 };
 
-module.exports = { login };
+/**
+ * Get user by ID
+ */
+const getUserById = async (id) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      canAccessDashboard: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (!user.isActive) {
+    throw new Error('User account is deactivated');
+  }
+
+  return user;
+};
+
+module.exports = { login, getUserById };

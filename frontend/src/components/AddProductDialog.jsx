@@ -37,7 +37,31 @@ export function AddProductDialog({ open, onOpenChange }) {
     isActive: true,
     isFeatured: false
   });
+  const [selectedSizes, setSelectedSizes] = useState([]);
+  const [selectedColors, setSelectedColors] = useState([]);
   const [imageUrls, setImageUrls] = useState('');
+
+  // Size and color options
+  const sizeOptions = [
+    { value: 'small', label: 'Small' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'large', label: 'Large' }
+  ];
+
+  const colorOptions = [
+    { value: 'black', label: 'Black', hexCode: '#000000' },
+    { value: 'white', label: 'White', hexCode: '#FFFFFF' },
+    { value: 'red', label: 'Red', hexCode: '#FF0000' },
+    { value: 'blue', label: 'Blue', hexCode: '#0000FF' },
+    { value: 'green', label: 'Green', hexCode: '#008000' },
+    { value: 'yellow', label: 'Yellow', hexCode: '#FFFF00' },
+    { value: 'orange', label: 'Orange', hexCode: '#FFA500' },
+    { value: 'purple', label: 'Purple', hexCode: '#800080' },
+    { value: 'pink', label: 'Pink', hexCode: '#FFC0CB' },
+    { value: 'brown', label: 'Brown', hexCode: '#A52A2A' },
+    { value: 'gray', label: 'Gray', hexCode: '#808080' },
+    { value: 'navy', label: 'Navy', hexCode: '#000080' }
+  ];
 
   // Get the toast hook and query client at component level
   const { toast } = useToast();
@@ -67,6 +91,24 @@ export function AddProductDialog({ open, onOpenChange }) {
     } catch (_) {
       return false;
     }
+  };
+
+  // Handle size selection
+  const handleSizeToggle = (sizeValue) => {
+    setSelectedSizes(prev => 
+      prev.includes(sizeValue) 
+        ? prev.filter(s => s !== sizeValue)
+        : [...prev, sizeValue]
+    );
+  };
+
+  // Handle color selection
+  const handleColorToggle = (colorValue) => {
+    setSelectedColors(prev => 
+      prev.includes(colorValue) 
+        ? prev.filter(c => c !== colorValue)
+        : [...prev, colorValue]
+    );
   };
 
   // Fetch categories using React Query
@@ -102,6 +144,20 @@ export function AddProductDialog({ open, onOpenChange }) {
       }
     }
 
+    // Prepare sizes and colors data
+    const sizesData = selectedSizes.map(sizeValue => ({
+      value: sizeValue,
+      sizeType: 'letter'
+    }));
+
+    const colorsData = selectedColors.map(colorValue => {
+      const colorOption = colorOptions.find(c => c.value === colorValue);
+      return {
+        name: colorOption.label,
+        hexCode: colorOption.hexCode
+      };
+    });
+
     // Convert string values to appropriate types
     const productData = {
       ...formData,
@@ -110,7 +166,9 @@ export function AddProductDialog({ open, onOpenChange }) {
       compareAtPrice: formData.compareAtPrice ? parseFloat(formData.compareAtPrice) : null,
       stockQuantity: parseInt(formData.stockQuantity),
       slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-      images: imageData
+      images: imageData,
+      sizes: sizesData,
+      colors: colorsData
     };
 
     try {
@@ -137,6 +195,8 @@ export function AddProductDialog({ open, onOpenChange }) {
         isActive: true,
         isFeatured: false
       });
+      setSelectedSizes([]);
+      setSelectedColors([]);
       setImageUrls('');
       onOpenChange(false);
     } catch (error) {
@@ -274,6 +334,62 @@ export function AddProductDialog({ open, onOpenChange }) {
                     }
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Available Sizes</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {sizeOptions.map((size) => (
+                      <Button
+                        key={size.value}
+                        type="button"
+                        variant={selectedSizes.includes(size.value) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSizeToggle(size.value)}
+                        className="min-w-[80px]"
+                      >
+                        {size.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedSizes.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Selected: {selectedSizes.map(s => sizeOptions.find(opt => opt.value === s)?.label).join(', ')}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Available Colors</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {colorOptions.map((color) => (
+                      <Button
+                        key={color.value}
+                        type="button"
+                        variant={selectedColors.includes(color.value) ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleColorToggle(color.value)}
+                        className="flex items-center gap-2 min-h-[32px]"
+                        style={{
+                          backgroundColor: selectedColors.includes(color.value) ? color.hexCode : undefined,
+                          color: selectedColors.includes(color.value) ? 
+                            (color.hexCode === '#FFFFFF' || color.hexCode === '#FFFF00' ? '#000000' : '#FFFFFF') : undefined,
+                          borderColor: color.hexCode
+                        }}
+                      >
+                        <div 
+                          className="w-3 h-3 rounded-full border border-gray-300"
+                          style={{ backgroundColor: color.hexCode }}
+                        />
+                        {color.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedColors.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Selected: {selectedColors.map(c => colorOptions.find(opt => opt.value === c)?.label).join(', ')}
+                    </p>
+                  )}
                 </div>
 
 

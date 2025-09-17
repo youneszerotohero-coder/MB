@@ -103,4 +103,3 @@ export const getLowStockProducts = async (limit = 50) => {
     throw error
   }
 }
-

@@ -91,10 +91,14 @@ export default function App() {
   // Set default color and size when product loads
   useEffect(() => {
     if (data && mainProduct.colors && mainProduct.colors.length > 0) {
-      setSelectedColor(mainProduct.colors[0])
+      const firstColor = mainProduct.colors[0];
+      const colorValue = typeof firstColor === 'string' ? firstColor : (firstColor.name || firstColor.value || 'Unknown');
+      setSelectedColor(colorValue);
     }
     if (data && mainProduct.sizes && mainProduct.sizes.length > 0) {
-      setSelectedSize(mainProduct.sizes[0])
+      const firstSize = mainProduct.sizes[0];
+      const sizeValue = typeof firstSize === 'string' ? firstSize : (firstSize.value || firstSize.size || 'Unknown');
+      setSelectedSize(sizeValue);
     }
   }, [data, mainProduct.colors, mainProduct.sizes])
 
@@ -298,15 +302,28 @@ export default function App() {
                   Color: <span className="font-semibold">{selectedColor}</span>
                 </span>
                 <div className="mt-2 flex space-x-2">
-                  {mainProduct.colors.map((color) => (
-                    <button
-                      key={color}
-                      className={`h-8 w-8 rounded-full border-2 transition-colors duration-200 ${selectedColor === color ? 'border-gray-900' : 'border-gray-200'}`}
-                      style={{ backgroundColor: color === 'Beige' ? '#E5D6C5' : color === 'Black' ? '#1E1E1E' : color === 'White' ? '#F4F4F4' : '#6A4D3B' }}
-                      onClick={() => setSelectedColor(color)}
-                      aria-label={`Select color ${color}`}
-                    />
-                  ))}
+                  {mainProduct.colors.map((color, index) => {
+                    // Handle both string and object colors
+                    const colorValue = typeof color === 'string' ? color : (color.name || color.value || 'Unknown');
+                    const colorKey = typeof color === 'object' && color.id ? String(color.id) : colorValue;
+                    const hexCode = typeof color === 'object' && color.hexCode ? color.hexCode : null;
+                    
+                    // Use hexCode if available, otherwise fall back to predefined colors
+                    const backgroundColor = hexCode || 
+                      (colorValue === 'Beige' ? '#E5D6C5' : 
+                       colorValue === 'Black' ? '#1E1E1E' : 
+                       colorValue === 'White' ? '#F4F4F4' : '#6A4D3B');
+                    
+                    return (
+                      <button
+                        key={colorKey}
+                        className={`h-8 w-8 rounded-full border-2 transition-colors duration-200 ${selectedColor === colorValue ? 'border-gray-900' : 'border-gray-200'}`}
+                        style={{ backgroundColor }}
+                        onClick={() => setSelectedColor(colorValue)}
+                        aria-label={`Select color ${colorValue}`}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -318,15 +335,20 @@ export default function App() {
                   Size: <span className="font-semibold">{selectedSize}</span>
                 </span>
                 <div className="mt-2 flex space-x-2">
-                  {mainProduct.sizes.map((size) => (
-                    <button
-                      key={size}
-                      className={`px-4 py-2 border-2 rounded transition-colors duration-200 ${selectedSize === size ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 hover:border-gray-400'}`}
-                      onClick={() => setSelectedSize(size)}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {mainProduct.sizes.map((size, index) => {
+                    // Handle both string and object sizes
+                    const sizeValue = typeof size === 'string' ? size : (size.value || size.size || 'Unknown');
+                    const sizeKey = typeof size === 'object' && size.id ? String(size.id) : sizeValue;
+                    return (
+                      <button
+                        key={sizeKey}
+                        className={`px-4 py-2 border-2 rounded transition-colors duration-200 ${selectedSize === sizeValue ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 hover:border-gray-400'}`}
+                        onClick={() => setSelectedSize(sizeValue)}
+                      >
+                        {sizeValue}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
