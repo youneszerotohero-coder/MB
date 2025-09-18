@@ -1,4 +1,5 @@
-// prisma client wrapper
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-module.exports = prisma;
+// Use the singleton PrismaClient instance from database config
+const { getPrismaClient } = require('../config/database');
+
+// Export a function that returns the PrismaClient instance
+module.exports = getPrismaClient;

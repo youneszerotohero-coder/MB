@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Minus, ShoppingCart, Trash2, Calculator, Search, X, CheckCircle } from "lucide-react";
+import { Plus, Minus, ShoppingCart, Trash2, Calculator, Search, X, CheckCircle, QrCode } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
 import { getProductImageUrl } from "@/utils/imageUtils";
+import { QRScanner } from "../../components/QRScanner";
 
 export default function POS() {
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
   
   // Automated customer info for in-store orders
   const [customerInfo] = useState({
@@ -32,26 +32,16 @@ export default function POS() {
 
   // Fetch products from API
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['pos_products', searchTerm, selectedCategory],
+    queryKey: ['pos_products', searchTerm],
     queryFn: async () => {
       const params = {
         page: 1,
         limit: 100,
         isActive: true,
-        search: searchTerm || undefined,
-        categoryId: selectedCategory && selectedCategory !== 'all' ? selectedCategory : undefined
+        search: searchTerm || undefined
       };
       const res = await api.get('/products', { params });
       return res.data.data || res.data;
-    }
-  });
-
-  // Fetch categories for filtering
-  const { data: categories = [] } = useQuery({
-    queryKey: ['pos_categories'],
-    queryFn: async () => {
-      const res = await api.get('/categories');
-      return res.data.data?.categories || res.data?.categories || res.data.data || res.data || [];
     }
   });
 
@@ -121,6 +111,10 @@ export default function POS() {
   const clearCart = () => {
     setCart([]);
     setOrderSuccess(false);
+  };
+
+  const handleProductFound = (product) => {
+    addToCart(product);
   };
 
   const processOrder = async () => {
@@ -209,19 +203,14 @@ export default function POS() {
                     className="pl-10"
                   />
                 </div>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Button
+                  onClick={() => setQrScannerOpen(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <QrCode className="w-4 h-4" />
+                  Scan QR Code
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -465,6 +454,14 @@ export default function POS() {
           )}
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        open={qrScannerOpen}
+        onOpenChange={setQrScannerOpen}
+        onProductFound={handleProductFound}
+        products={products}
+      />
     </div>
   );
 }

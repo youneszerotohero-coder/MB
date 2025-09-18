@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
-import { Plus, Search, Edit, Trash2, Image as ImageIcon, X } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Image as ImageIcon, X, QrCode } from "lucide-react";
 import { resolveImageUrl } from '@/utils/imageUtils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { EditProductDialog } from "../../components/EditProductDialog";
 import { DeleteProductDialog } from "../../components/DeleteProductDialog";
 import { EditCategoryDialog } from "../../components/EditCategoryDialog";
 import { DeleteCategoryDialog } from "../../components/DeleteCategoryDialog";
+import { QRCodeDialog } from "../../components/QRCodeDialog";
 
 export default function AProducts() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,6 +25,7 @@ export default function AProducts() {
   const [deleteProductOpen, setDeleteProductOpen] = useState(false);
   const [editCategoryOpen, setEditCategoryOpen] = useState(false);
   const [deleteCategoryOpen, setDeleteCategoryOpen] = useState(false);
+  const [qrCodeOpen, setQrCodeOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -79,6 +81,11 @@ export default function AProducts() {
     setDeleteProductOpen(true);
   };
 
+  const handleQRCode = (product) => {
+    setSelectedProduct(product);
+    setQrCodeOpen(true);
+  };
+
   const handleCloseEditDialog = () => {
     setEditProductOpen(false);
     setSelectedProduct(null);
@@ -108,6 +115,11 @@ export default function AProducts() {
   const handleCloseDeleteCategoryDialog = () => {
     setDeleteCategoryOpen(false);
     setSelectedCategory(null);
+  };
+
+  const handleCloseQRCodeDialog = () => {
+    setQrCodeOpen(false);
+    setSelectedProduct(null);
   };
 
   return (
@@ -358,6 +370,14 @@ export default function AProducts() {
                             </Button>
                             <Button 
                               variant="ghost" 
+                              size="sm"
+                              onClick={() => handleQRCode(product)}
+                              title="Generate QR Code"
+                            >
+                              <QrCode className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
                               size="sm" 
                               className="text-destructive hover:text-destructive"
                               onClick={() => handleDeleteProduct(product)}
@@ -406,6 +426,11 @@ export default function AProducts() {
         open={deleteCategoryOpen} 
         onOpenChange={handleCloseDeleteCategoryDialog}
         category={selectedCategory}
+      />
+      <QRCodeDialog 
+        open={qrCodeOpen} 
+        onOpenChange={handleCloseQRCodeDialog}
+        product={selectedProduct}
       />
     </div>
   );

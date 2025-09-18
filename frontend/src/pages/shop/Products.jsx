@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import ProductCard from "../../components/productCard"
 import { getProductImageUrl } from '@/utils/imageUtils'
+import { useTranslation } from "react-i18next"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 // Default color options (will be enhanced with backend data)
 const defaultColors = [
@@ -32,6 +34,9 @@ const defaultSizes = [
 ]
 
 function ProductsGrid({ appliedFilters, currentPage, setCurrentPage }) {
+  const { t } = useTranslation();
+  const { isRTL } = useLanguage();
+  
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['products', { ...appliedFilters, page: currentPage }],
     queryFn: async () => {
@@ -82,14 +87,14 @@ function ProductsGrid({ appliedFilters, currentPage, setCurrentPage }) {
     <div className="p-8 text-center">
       <div className="flex justify-center items-center space-x-2">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C8B28D]"></div>
-        <span>Loading products...</span>
+        <span>{t('common.loading')}</span>
       </div>
     </div>
   )
   
   if (isError) return (
     <div className="p-8 text-center">
-      <div className="text-red-600">Error loading products</div>
+      <div className="text-red-600">{t('common.error')}</div>
       <button 
         onClick={() => refetch()} 
         className="mt-4 px-4 py-2 bg-[#C8B28D] text-white rounded hover:bg-[#b49e77]"
@@ -105,7 +110,7 @@ function ProductsGrid({ appliedFilters, currentPage, setCurrentPage }) {
   if (products.length === 0) {
     return (
       <div className="p-8 text-center">
-        <p className="text-gray-500">No products found matching your criteria.</p>
+        <p className="text-gray-500">{t('products.noProducts')}</p>
         <button 
           onClick={() => refetch()} 
           className="mt-4 px-4 py-2 bg-[#C8B28D] text-white rounded hover:bg-[#b49e77]"
@@ -190,6 +195,9 @@ function ProductsGrid({ appliedFilters, currentPage, setCurrentPage }) {
 }
 
 export default function ProductCatalog() {
+  const { t } = useTranslation();
+  const { isRTL } = useLanguage();
+  
   // Current filter state (what user is selecting)
   const [searchTerm, setSearchTerm] = useState("")
   const [priceRange, setPriceRange] = useState([0, 1000])
@@ -314,7 +322,7 @@ export default function ProductCatalog() {
   }
 
   return (
-    <div className="mt-16 min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className={`mt-16 min-h-screen bg-gray-50 p-4 md:p-6 ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="max-w-7xl mx-auto">
         <div className="md:hidden mb-4">
           <Button
@@ -322,7 +330,7 @@ export default function ProductCatalog() {
             className={`w-full ${hasUnsavedChanges ? 'bg-[#C8B28D] text-white hover:bg-[#b49e77]' : 'bg-[#C8B28D] text-white hover:bg-[#b49e77]'} relative`}
           >
             <Filter className="h-4 w-4 mr-2" />
-            Filters
+            {t('products.filters')}
             {hasUnsavedChanges && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
             )}
@@ -343,7 +351,7 @@ export default function ProductCatalog() {
             >
               <div className="flex justify-between items-center mb-6 md:block">
                 <h2 className="text-xl font-semibold flex items-center">
-                  Filters
+                  {t('products.filters')}
                   {hasUnsavedChanges && (
                     <div className="ml-2 w-2 h-2 bg-red-500 rounded-full"></div>
                   )}
@@ -357,7 +365,7 @@ export default function ProductCatalog() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search bags..."
+                    placeholder={t('products.searchPlaceholder')}
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className="pl-10"
@@ -366,7 +374,7 @@ export default function ProductCatalog() {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-medium mb-4">Price</h3>
+                <h3 className="font-medium mb-4">{t('products.priceRange')}</h3>
                 <div className="px-2">
                   <Slider value={priceRange} onValueChange={handlePriceChange} max={1000} step={100} className="mb-4 " />
                   <div className="flex justify-between text-sm text-gray-600">
@@ -377,7 +385,7 @@ export default function ProductCatalog() {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-medium mb-4">Size</h3>
+                <h3 className="font-medium mb-4">{t('products.size')}</h3>
                 <div className="flex gap-2 flex-wrap">
                   {defaultSizes.map((size) => (
                     <Button
@@ -399,7 +407,7 @@ export default function ProductCatalog() {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-medium mb-4">Color</h3>
+                <h3 className="font-medium mb-4">{t('products.color')}</h3>
                 <div className="grid grid-cols-4 gap-2">
                   {defaultColors.map((color) => (
                     <button
@@ -420,10 +428,10 @@ export default function ProductCatalog() {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-medium mb-4">Category</h3>
+                <h3 className="font-medium mb-4">{t('products.categoryFilter')}</h3>
                 <div className="space-y-3 max-h-48 overflow-y-auto">
                   {categories.length === 0 ? (
-                    <p className="text-sm text-gray-500">Loading categories...</p>
+                    <p className="text-sm text-gray-500">{t('products.loadingCategories')}</p>
                   ) : (
                     categories.map((category) => (
                       <div key={category.id} className="flex items-center space-x-2">
@@ -452,14 +460,14 @@ export default function ProductCatalog() {
                   onClick={applyFilters}
                   disabled={!hasUnsavedChanges}
                 >
-                  {hasUnsavedChanges ? 'Apply Filters' : 'Filters Applied'}
+                  {hasUnsavedChanges ? t('products.applyFilters') : t('products.filtersApplied')}
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full"
                   onClick={clearAllFilters}
                 >
-                  Clear All Filters
+                  {t('products.clearAllFilters')}
                 </Button>
               </div>
             </div>

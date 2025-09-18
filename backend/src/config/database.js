@@ -47,6 +47,26 @@ const connectDatabase = async () => {
   }
 };
 
+// Health check function
+const healthCheck = async () => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return {
+      status: 'healthy',
+      message: 'Database connection is working',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    logger.error('Health check failed:', error);
+    return {
+      status: 'unhealthy',
+      message: 'Database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
+};
+
 // Graceful shutdown
 const disconnectDatabase = async () => {
   await prisma.$disconnect();
@@ -61,4 +81,5 @@ module.exports = {
   prisma,
   connectDatabase,
   disconnectDatabase,
+  healthCheck,
 };

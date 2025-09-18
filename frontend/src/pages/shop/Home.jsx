@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import heroImage from "../../../public/images/heroImage.jpg";
 import ProductCard from "../../components/productCard";
 import { useScrollAnimation } from "../../hooks/useScrollAnimation";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const CATEGORIES = [
   {
@@ -80,8 +82,11 @@ const TESTIMONIALS = [
 ];
 
 export default function MouadBoutiqueLanding() {
+  const { t } = useTranslation();
+  const { isRTL } = useLanguage();
+
   return (
-    <div className="mt-10 min-h-screen bg-white text-neutral-900">
+    <div className={`mt-10 min-h-screen bg-white text-neutral-900 ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* hero section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white to-neutral-50">
         <div className="mx-auto grid min-h-[70vh] max-w-7xl grid-cols-1 items-center gap-10 px-4 py-16 md:grid-cols-2">
@@ -91,17 +96,17 @@ export default function MouadBoutiqueLanding() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h1 className="text-center font-serif text-5xl font-bold text-[#C8B28D] sm:text-6xl">
-              Timeless Elegance
+              {t('home.title')}
             </h1>
             <p className="mt-6 text-center text-neutral-700 max-w-2xl mx-auto">
-              Premium handbags crafted for every occasion. Designed to elevate your everyday and last for years.
+              {t('home.subtitle')}
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button className="rounded-2xl bg-[#C8B28D] px-6 py-3 text-sm font-medium text-white hover:bg-[#B89E72]">
-                Shop Now
+                {t('home.shopNow')}
               </Button>
               <Button variant="outline" className="rounded-2xl border border-[#C8B28D] px-6 py-3 text-sm font-medium text-[#C8B28D] hover:bg-[#F8F5F0]">
-                Explore Categories
+                {t('home.exploreCategories')}
               </Button>
             </div>
           </motion.div>
@@ -131,8 +136,8 @@ export default function MouadBoutiqueLanding() {
             transition={{ duration: 0.6 }}
             className="mx-auto mb-10 max-w-2xl text-center"
           >
-            <h2 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">Shop by Category</h2>
-            <p className="mt-3 text-neutral-600">Find the perfect companion: totes, crossbody, backpacks, or clutches.</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">{t('home.shopByCategory')}</h2>
+            <p className="mt-3 text-neutral-600">{t('home.categoryDescription')}</p>
           </motion.div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {CATEGORIES.map((cat, i) => (
@@ -165,8 +170,8 @@ export default function MouadBoutiqueLanding() {
             transition={{ duration: 0.6 }}
             className="mx-auto mb-10 max-w-2xl text-center"
           >
-            <h2 className="text-3xl font-semibold text-neutral-900 sm:text-4xl">Bestsellers</h2>
-            <p className="mt-3 text-neutral-600">Our most-loved pieces, now in stock.</p>
+            <h2 className="text-3xl font-semibold text-neutral-900 sm:text-4xl">{t('home.bestsellers')}</h2>
+            <p className="mt-3 text-neutral-600">{t('home.bestsellersDescription')}</p>
           </motion.div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {PRODUCTS.map((p, i) => (
@@ -193,8 +198,8 @@ export default function MouadBoutiqueLanding() {
             transition={{ duration: 0.6 }}
             className="mx-auto mb-10 max-w-2xl text-center"
           >
-            <h2 className="text-3xl font-semibold text-neutral-900 sm:text-4xl">What Our Clients Say</h2>
-            <p className="mt-3 text-neutral-600">Real reviews from Mouad Boutique customers.</p>
+            <h2 className="text-3xl font-semibold text-neutral-900 sm:text-4xl">{t('home.testimonials')}</h2>
+            <p className="mt-3 text-neutral-600">{t('home.testimonialsDescription')}</p>
           </motion.div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (

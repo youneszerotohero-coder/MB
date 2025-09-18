@@ -1,22 +1,43 @@
 console.log('Starting server initialization...');
 const logger = require('./src/utils/logger');
 
+let server;
+
 try {
   console.log('Loading app module...');
   const app = require('./src/app');
   
   console.log('Loading database module...');
-  const { connectDatabase } = require('./src/config/database');
+  const { connectDatabase, healthCheck } = require('./src/config/database');
 
   const PORT = process.env.PORT || 5000;
 
   console.log('Connecting to database...');
   // First connect to the database
   connectDatabase()
-    .then(() => {
+    .then(async () => {
       console.log('Database connected, starting server...');
-      const server = app.listen(PORT, () => {
+      
+      // Perform health check
+      const health = await healthCheck();
+      console.log('Database health check:', health);
+      
+      server = app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+        console.log(`📊 Database connection pool: healthy`);
+      });
+
+      // Add health check endpoint
+      server.on('request', (req, res) => {
+        if (req.url === '/health' && req.method === 'GET') {
+          healthCheck().then(health => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(health));
+          }).catch(() => {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'unhealthy' }));
+          });
+        }
       });
     })
     .catch((error) => {
@@ -32,22 +53,34 @@ try {
 process.on('unhandledRejection', (err) => {
   console.error('UNHANDLED REJECTION! 💥 Shutting down...');
   console.error(err);
-  server.close(() => {
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  } else {
     process.exit(1);
-  });
+  }
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   logger.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
   logger.error(err.name, err.message);
-  process.exit(1);
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('👋 SIGTERM RECEIVED. Shutting down gracefully');
-  server.close(() => {
-    logger.info('💥 Process terminated!');
-  });
+  if (server) {
+    server.close(() => {
+      logger.info('💥 Process terminated!');
+    });
+  }
 });

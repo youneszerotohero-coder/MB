@@ -8,5 +8,6 @@ router.use('/orders', require('./order.routes'));
 router.use('/campaigns', require('./campaign.routes'));
 router.use('/analytics', require('./analytics.routes'));
 router.use('/upload', require('./upload.routes'));
+router.use('/health', require('./health.routes'));
 
 module.exports = router;

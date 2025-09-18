@@ -6,11 +6,15 @@ import { Loader2, CheckCircle, AlertCircle, Check } from "lucide-react";
 import statesData from "../../utils/statesData"
 import ProductCard from '../../components/productCard';
 import { getProductImageUrl, resolveImageUrl } from '@/utils/imageUtils';
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Main App Component
 export default function App() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation();
+  const { isRTL, currentLanguage } = useLanguage();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['product', id],
@@ -29,8 +33,17 @@ export default function App() {
     images: [],
     colors: [],
     sizes: [],
-    description: ''
+    description: '',
+    descriptionAr: ''
   }
+
+  // Get the appropriate description based on current language
+  const getProductDescription = () => {
+    if (currentLanguage === 'ar' && mainProduct.descriptionAr) {
+      return mainProduct.descriptionAr;
+    }
+    return mainProduct.description || 'This elegant handbag is perfect for any occasion. Made from high-quality materials, it offers both comfort and style. The bag features a flattering silhouette and subtle details that add a touch of sophistication. Available in various colors, it\'s designed to fit and flatter every body type.';
+  };
 
   // Process images properly 
   const productImages = Array.isArray(mainProduct.images) 
@@ -131,20 +144,20 @@ export default function App() {
     <div className="mt-20 p-8 text-center">
       <div className="flex justify-center items-center space-x-2">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-        <span>Loading product...</span>
+        <span>{t('common.loadingProduct')}</span>
       </div>
     </div>
   )
   
   if (isError) return (
     <div className="mt-20 p-8 text-center">
-      <div className="text-red-600">Error loading product: {error?.message}</div>
+      <div className="text-red-600">{t('common.error')}: {error?.message}</div>
       <div className="mt-4">
         <button 
           onClick={() => window.location.reload()} 
           className="px-4 py-2 bg-amber-200 text-amber-800 rounded hover:bg-amber-300"
         >
-          Try Again
+          {t('common.tryAgain')}
         </button>
       </div>
     </div>
@@ -152,7 +165,7 @@ export default function App() {
 
   if (!data) return (
     <div className="mt-20 p-8 text-center">
-      <div className="text-gray-600">Product not found</div>
+      <div className="text-gray-600">{t('common.productNotFound')}</div>
     </div>
   )
 
@@ -160,7 +173,7 @@ export default function App() {
     if (!fullName || !phone) {
       setNotification({
         show: true,
-        message: "Please fill out all required fields",
+        message: t('checkout.requiredFields'),
         type: "error"
       });
       return;
@@ -191,7 +204,7 @@ export default function App() {
       // Show success notification
       setNotification({
         show: true,
-        message: `Order ${response.data.data.orderNumber} created successfully! Redirecting...`,
+        message: `${t('common.orderCreated')} ${response.data.data.orderNumber}`,
         type: "success"
       });
 
@@ -212,7 +225,7 @@ export default function App() {
       console.error('Error creating order:', error);
       setNotification({
         show: true,
-        message: error.response?.data?.message || "Failed to create order. Please try again.",
+        message: error.response?.data?.message || t('common.orderFailed'),
         type: "error"
       });
     } finally {
@@ -238,7 +251,7 @@ export default function App() {
   };
 
   return (
-    <div className="mt-20 bg-white font-sans text-gray-800 antialiased">
+    <div className={`mt-20 bg-white font-sans text-gray-800 antialiased ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Notification */}
       {notification.show && (
         <div className={`fixed top-4 right-4 z-50 p-4 rounded-md shadow-md ${
@@ -379,9 +392,9 @@ export default function App() {
             
             {/* Description */}
             <div className="">
-              <h2 className='font-semibold mb-3 text-lg'>Description</h2>
-              <p className='text-gray-600 leading-relaxed'>
-                {mainProduct.description || 'This elegant handbag is perfect for any occasion. Made from high-quality materials, it offers both comfort and style. The bag features a flattering silhouette and subtle details that add a touch of sophistication. Available in various colors, it\'s designed to fit and flatter every body type.'}
+              <h2 className='font-semibold mb-3 text-lg'>{t('products.description')}</h2>
+              <p className={`text-gray-600 leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
+                {getProductDescription()}
               </p>
             </div>
             
@@ -389,19 +402,19 @@ export default function App() {
         </div>
             {/* Checkout Form */}
             <div className="border-t pt-2">
-              <h2 className="text-xl font-bold mb-6 text-gray-800">Complete Your Order</h2>
+              <h2 className="text-xl font-bold mb-6 text-gray-800">{t('checkout.title')}</h2>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left: Form Fields */}
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Full name *
+                      {t('checkout.fullName')} *
                     </label>
                     <input
                       id="fullName"
                       type="text"
-                      placeholder="Enter full name"
+                      placeholder={t('checkout.fullNamePlaceholder')}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
@@ -410,12 +423,12 @@ export default function App() {
 
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone number *
+                      {t('checkout.phone')} *
                     </label>
                     <input
                       id="phone"
                       type="tel"
-                      placeholder="Enter phone number"
+                      placeholder={t('checkout.phonePlaceholder')}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
@@ -424,7 +437,7 @@ export default function App() {
 
                   <div>
                     <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-                      Wilaya
+                      {t('checkout.wilaya')}
                     </label>
                     <select
                       id="state"
@@ -432,7 +445,7 @@ export default function App() {
                       onChange={(e) => setState(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                     >
-                      <option value="">Select Wilaya</option>
+                      <option value="">{t('checkout.selectWilaya')}</option>
                       {Object.keys(statesData).map((code) => (
                         <option key={code} value={code}>
                           {statesData[code].wilaya_ar}
@@ -443,7 +456,7 @@ export default function App() {
 
                   <div>
                     <label htmlFor="commune" className="block text-sm font-medium text-gray-700 mb-1">
-                      Commune
+                      {t('checkout.commune')}
                     </label>
                     <select
                       id="commune"
@@ -452,7 +465,7 @@ export default function App() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                       disabled={!state}
                     >
-                      <option value="">Select Commune</option>
+                      <option value="">{t('checkout.selectCommune')}</option>
                       {availableCommunes.map((baladia) => (
                         <option key={baladia} value={baladia}>
                           {baladia}
@@ -461,12 +474,12 @@ export default function App() {
                     </select>
                   </div>
 
-                  <p className="text-xs text-gray-500 mt-4">* Required fields</p>
+                  <p className="text-xs text-gray-500 mt-4">* {t('checkout.requiredFields')}</p>
                 </div>
 
                 {/* Right: Order Summary */}
                 <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-medium mb-4 text-gray-800">Order Summary</h3>
+                  <h3 className="text-lg font-medium mb-4 text-gray-800">{t('checkout.orderSummary')}</h3>
 
                   <div className="flex gap-3 mb-4">
                     <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
@@ -478,8 +491,8 @@ export default function App() {
                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-medium">{mainProduct.name}</h4>
-                      <p className="text-sm text-gray-500">Color: {selectedColor}</p>
-                      <p className="text-sm text-gray-500">Qty: {quantity}</p>
+                      <p className="text-sm text-gray-500">{t('checkout.color')}: {selectedColor}</p>
+                      <p className="text-sm text-gray-500">{t('checkout.quantity')}: {quantity}</p>
                       <p className="text-sm font-medium mt-1 text-gray-800">
                         ${Number(mainProduct.price || 0).toFixed(2)}
                       </p>
@@ -488,15 +501,15 @@ export default function App() {
 
                   <div className="border-t pt-4 space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal</span>
+                      <span className="text-gray-600">{t('checkout.subtotal')}</span>
                       <span>${subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Shipping</span>
+                      <span className="text-gray-600">{t('checkout.shipping')}</span>
                       <span>${(shipping / 100).toFixed(2)}</span>
                     </div>
                     <div className="border-t pt-2 flex justify-between font-medium text-gray-800">
-                      <span>Total</span>
+                      <span>{t('checkout.total')}</span>
                       <span>${(total / 100 + subtotal).toFixed(2)}</span>
                     </div>
                   </div>
@@ -509,16 +522,16 @@ export default function App() {
                     {isProcessing ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
+                        {t('checkout.processing')}
                       </>
                     ) : (
-                      "Complete Order"
+                      t('checkout.completeOrder')
                     )}
                   </button>
 
                   <div className="flex items-center gap-2 mt-4 justify-center">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-xs text-gray-500">Secure Checkout • SSL Encrypted</span>
+                    <span className="text-xs text-gray-500">{t('checkout.secureCheckout')}</span>
                   </div>
                 </div>
               </div>

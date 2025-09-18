@@ -22,12 +22,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { Image as ImageIcon, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function EditProductDialog({ open, onOpenChange, product }) {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    descriptionAr: '',
     price: '',
     cost: '',
     compareAtPrice: '',
@@ -84,6 +87,7 @@ export function EditProductDialog({ open, onOpenChange, product }) {
       setFormData({
         name: product.name || '',
         description: product.description || '',
+        descriptionAr: product.descriptionAr || '',
         price: product.price?.toString() || '',
         cost: product.cost?.toString() || '',
         compareAtPrice: product.compareAtPrice?.toString() || '',
@@ -162,7 +166,7 @@ export function EditProductDialog({ open, onOpenChange, product }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Product</DialogTitle>
+          <DialogTitle>{t('admin.editProduct')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -313,15 +317,29 @@ export function EditProductDialog({ open, onOpenChange, product }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t('admin.descriptionEnglish')}</Label>
               <Textarea
                 id="description"
-                placeholder="Enter product description"
+                placeholder={t('admin.descriptionEnglishPlaceholder')}
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
                 className="min-h-[100px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descriptionAr">{t('admin.descriptionArabic')}</Label>
+              <Textarea
+                id="descriptionAr"
+                placeholder={t('admin.descriptionArabicPlaceholder')}
+                value={formData.descriptionAr}
+                onChange={(e) =>
+                  setFormData({ ...formData, descriptionAr: e.target.value })
+                }
+                className="min-h-[100px]"
+                dir="rtl"
               />
             </div>
 
